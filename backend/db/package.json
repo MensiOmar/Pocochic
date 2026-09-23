@@ -1,0 +1,27 @@
+{
+  "name": "@pocochic/db",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Shared Drizzle schema and migrations for POCOCHIC (D1 + local SQLite)",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema.ts"
+  },
+  "scripts": {
+    "dev": "echo 'db package has no runtime; use db:generate / db:migrate'",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
+    "build": "echo 'no build for schema package'",
+    "test": "echo 'add tests in future'"
+  },
+  "dependencies": {
+    "drizzle-orm": "0.33.0"
+  },
+  "devDependencies": {
+    "drizzle-kit": "0.24.2",
+    "better-sqlite3": "11.3.0"
+  }
+}

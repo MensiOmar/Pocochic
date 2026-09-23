@@ -1,0 +1,11 @@
+name = "pocochic-shop-api"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+
+# For local dev with docker services (see pocochic/DEVELOPMENT.md)
+# In real: use wrangler d1 and r2 bindings; here we read from .env for direct sqlite + minio
+[vars]
+# populated from .env at runtime via process or wrangler
+
+# Local dev note: run with `DATABASE_URL=... MINIO_... wrangler dev` or load .env in shell (from pocochic/ dir)
+# For full local: the db package uses direct sqlite file; minio via sdk in future
