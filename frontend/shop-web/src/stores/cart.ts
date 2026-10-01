@@ -49,11 +49,30 @@ export const useCartStore = defineStore("cart", () => {
 
   function add(line: StoredCartLine) {
     const existing = lines.value.find((item) => item.variantId === line.variantId);
+    const known = Math.min(existing?.availableQty ?? line.availableQty, line.availableQty, MAX_QTY);
     const nextQty = (existing?.quantity ?? 0) + line.quantity;
-    const cap = Math.min(line.availableQty, MAX_QTY);
-    if (nextQty > cap) return false;
-    if (existing) existing.quantity = nextQty;
-    else lines.value.push({ ...line, quantity: nextQty });
+    if (!Number.isInteger(line.quantity) || line.quantity < 1 || !Number.isInteger(nextQty) || nextQty > known) {
+      if (existing && (existing.availableQty !== known || existing.quantity > known)) {
+        existing.availableQty = known;
+        if (existing.quantity > known) existing.quantity = known;
+        dropQuote();
+        persist();
+      }
+      return false;
+    }
+    if (existing) {
+      existing.quantity = nextQty;
+      existing.availableQty = known;
+      existing.unitPriceCents = line.unitPriceCents;
+      existing.displayName = line.displayName;
+      existing.itemCode = line.itemCode;
+      existing.size = line.size;
+      existing.reference = line.reference;
+      existing.imagePath = line.imagePath;
+      existing.slug = line.slug;
+    } else {
+      lines.value.push({ ...line, quantity: nextQty, availableQty: known });
+    }
     dropQuote();
     persist();
     return true;

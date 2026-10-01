@@ -30,21 +30,29 @@ async function load() {
     state.value = "missing";
     return;
   }
-  const res = await api.styles[":slug"].$get({ param: { slug } });
-  if (current !== request) return;
-  if (res.status === 404) {
-    state.value = "missing";
-    return;
+  try {
+    const res = await api.styles[":slug"].$get({ param: { slug } });
+    if (current !== request) return;
+    if (res.status === 404) {
+      state.value = "missing";
+      return;
+    }
+    if (!res.ok) {
+      state.value = "error";
+      return;
+    }
+    const body = styleDetailSchema.safeParse(await res.json());
+    if (current !== request) return;
+    if (!body.success) {
+      state.value = "error";
+      return;
+    }
+    style.value = body.data;
+    selectedId.value = defaultVariantId(body.data.variants);
+    state.value = "ready";
+  } catch {
+    if (current === request) state.value = "error";
   }
-  if (!res.ok) {
-    state.value = "error";
-    return;
-  }
-  const body = styleDetailSchema.parse(await res.json());
-  if (current !== request) return;
-  style.value = body;
-  selectedId.value = defaultVariantId(body.variants);
-  state.value = "ready";
 }
 
 function select(id: string) {

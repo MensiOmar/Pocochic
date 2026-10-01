@@ -32,7 +32,8 @@ export type CheckoutIssue =
 const BLOCKING: ReadonlySet<CheckoutIssue> = new Set(["addressLong", "socialLong", "nameLong"]);
 
 export function phoneDigits(value: string): string {
-  return value.replace(/\D/g, "");
+  const western = value.replace(/[\u0660-\u0669\u06F0-\u06F9]/g, (digit) => String(digit.charCodeAt(0) & 0xf));
+  return western.replace(/\D/g, "");
 }
 
 export function joinName(first: string, last: string): string {

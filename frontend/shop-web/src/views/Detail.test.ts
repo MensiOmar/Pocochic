@@ -148,6 +148,15 @@ describe("Detail", () => {
     expect(wrapper.text()).toContain("Add to cart");
   });
 
+  it("shows an error when the product request fails", async () => {
+    vi.mocked(api.styles[":slug"].$get).mockRejectedValue(new Error("down"));
+    await router.push("/en/p/hello-hoodie");
+    await router.isReady();
+    const wrapper = mount(Detail, { global: { plugins: [router, createPinia()] } });
+    await flushPromises();
+    expect(wrapper.text()).toContain("Couldn't load. Please retry.");
+  });
+
   it("explains a missing style", async () => {
     const wrapper = await open("missing", { error: { code: "not_found", message: "Style not found" } }, 404);
     expect(wrapper.text()).toContain("This piece isn't in the shop.");

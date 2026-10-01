@@ -15,7 +15,7 @@ import { api, catalogSrc } from "../api";
 import { refreshCart, requestPromoQuote, type PromoErrorKind } from "../cart-sync";
 import PriceTag from "../components/PriceTag.vue";
 import { checkoutIssues, isBlockingIssue, joinName, phoneDigits, saveReceipt, summaryMeta, type CheckoutIssue } from "../checkout";
-import { t } from "../i18n";
+import { promoErrorMessage, t } from "../i18n";
 import { useCartStore } from "../stores/cart";
 import { useCheckoutDraftStore } from "../stores/checkout-draft";
 
@@ -39,6 +39,7 @@ const promoError = ref<PromoErrorKind | null>(null);
 const orderError = ref<"failed" | "invalid" | null>(null);
 const stockItems = ref<StockConflictItem[]>([]);
 let delegationToken = 0;
+let quoteGeneration = 0;
 let alive = true;
 
 const issues = computed(() => checkoutIssues({
@@ -51,14 +52,7 @@ const issues = computed(() => checkoutIssues({
   social: draft.social,
 }));
 const held = computed(() => pending.value || bagHold.value || promoHold.value || geoHold.value || sending.value || issues.value.some(isBlockingIssue));
-const promoMessage = computed(() => {
-  if (promoError.value === "promo_unknown") return t(locale.value, "promoUnknown");
-  if (promoError.value === "promo_exhausted") return t(locale.value, "promoExhausted");
-  if (promoError.value === "promo_min_count") return t(locale.value, "promoMin");
-  if (promoError.value === "unavailable") return t(locale.value, "promoUnavailable");
-  if (promoError.value === "unconfirmed") return t(locale.value, "promoUnconfirmed");
-  return "";
-});
+const promoMessage = computed(() => (promoError.value ? promoErrorMessage(locale.value, promoError.value) : ""));
 const orderMessage = computed(() => {
   if (orderError.value === "invalid") return t(locale.value, "orderInvalid");
   if (orderError.value === "failed") return t(locale.value, "orderFailed");
@@ -174,7 +168,9 @@ async function prepare() {
 }
 
 async function runQuote() {
+  const generation = ++quoteGeneration;
   const code = cart.promoCode.trim();
+  const lines = cart.lines.map((line) => ({ variantId: line.variantId, quantity: line.quantity }));
   if (!code) {
     promoHold.value = false;
     pending.value = false;
@@ -184,8 +180,8 @@ async function runQuote() {
   promoHold.value = false;
   promoError.value = null;
   cart.dropQuote();
-  const result = await requestPromoQuote(code, cart.lines.map((line) => ({ variantId: line.variantId, quantity: line.quantity })));
-  if (!alive || leaving.value) return;
+  const result = await requestPromoQuote(code, lines);
+  if (!alive || leaving.value || generation !== quoteGeneration) return;
   if (result.ok) cart.acceptQuote(result.quote);
   else if (result.kind === "unavailable") {
     promoHold.value = true;
@@ -211,20 +207,25 @@ async function submit() {
   if (issues.value.length > 0) return;
   sending.value = true;
   const social = draft.social.trim();
+  const customer = {
+    fullName: joinName(draft.firstName, draft.lastName),
+    phone: phoneDigits(draft.phone),
+    governorateId: draft.governorateId,
+    delegationId: draft.delegationId,
+    city: draft.address.trim(),
+    ...(social ? { socialHandle: social } : {}),
+  };
+  const lines = cart.lines.map((line) => ({ variantId: line.variantId, quantity: line.quantity }));
+  const promoCode = cart.quote?.code;
+  const idempotencyKey = draft.keyFor(JSON.stringify({ locale: locale.value, customer, lines, promoCode: promoCode ?? "" }));
   try {
     const res = await api.checkout.$post({
       json: {
         locale: locale.value,
-        customer: {
-          fullName: joinName(draft.firstName, draft.lastName),
-          phone: phoneDigits(draft.phone),
-          governorateId: draft.governorateId,
-          delegationId: draft.delegationId,
-          city: draft.address.trim(),
-          ...(social ? { socialHandle: social } : {}),
-        },
-        lines: cart.lines.map((line) => ({ variantId: line.variantId, quantity: line.quantity })),
-        ...(cart.quote ? { promoCode: cart.quote.code } : {}),
+        customer,
+        lines,
+        ...(promoCode ? { promoCode } : {}),
+        idempotencyKey,
       },
     });
     if (!alive) return;
