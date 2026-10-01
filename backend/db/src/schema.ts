@@ -96,12 +96,14 @@ export const orders = sqliteTable(
     discountCents: integer("discount_cents").notNull(),
     totalCents: integer("total_cents").notNull(),
     promoCode: text("promo_code"),
+    idempotencyKey: text("idempotency_key"),
     alertSentAt: text("alert_sent_at"),
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
   },
   (t) => ({
     createdIdx: index("orders_created_at_idx").on(t.createdAt),
+    idempotencyIdx: uniqueIndex("orders_idempotency_key_unique").on(t.idempotencyKey),
   }),
 );
 

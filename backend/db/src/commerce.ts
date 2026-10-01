@@ -16,6 +16,24 @@ export type DiscountRow = {
 
 export type QuoteLine = { unitPriceCents: number; quantity: number };
 
+export const MAX_CART_LINES = 50;
+export const MAX_LINE_QUANTITY = 99;
+
+export function validateCartLines(
+  lines: { variantId: string; quantity: number }[],
+): { ok: true } | { ok: false; code: "validation" } {
+  if (lines.length < 1 || lines.length > MAX_CART_LINES) return { ok: false, code: "validation" };
+  const seen = new Set<string>();
+  for (const line of lines) {
+    if (!line.variantId || seen.has(line.variantId)) return { ok: false, code: "validation" };
+    if (!Number.isInteger(line.quantity) || line.quantity < 1 || line.quantity > MAX_LINE_QUANTITY) {
+      return { ok: false, code: "validation" };
+    }
+    seen.add(line.variantId);
+  }
+  return { ok: true };
+}
+
 export type QuoteOk = {
   ok: true;
   discountCents: number;
@@ -34,24 +52,46 @@ export function itemsCentsOf(lines: QuoteLine[]): number {
   return lines.reduce((sum, line) => sum + line.unitPriceCents * line.quantity, 0);
 }
 
+function isPromoType(value: string): value is PromoType {
+  return value === "percent" || value === "free" || value === "discount";
+}
+
+function discountAmount(discount: DiscountRow, lines: QuoteLine[], itemsCents: number): number | null {
+  if (!isPromoType(discount.type)) return null;
+  if (discount.type === "percent") {
+    const percent = discount.percent_off;
+    if (percent === null || !Number.isInteger(percent) || percent < 0 || percent > 100) return null;
+    const scaled = itemsCents * percent;
+    if (!Number.isSafeInteger(scaled)) return null;
+    return Math.min(Math.floor(scaled / 100), itemsCents);
+  }
+  const cap = discount.amount_cents;
+  if (cap === null || !Number.isInteger(cap) || cap < 0) return null;
+  if (discount.type === "free") {
+    let cheapest = Number.POSITIVE_INFINITY;
+    for (const line of lines) {
+      if (!Number.isInteger(line.unitPriceCents) || line.unitPriceCents < 0) return null;
+      if (line.unitPriceCents < cheapest) cheapest = line.unitPriceCents;
+    }
+    if (!Number.isFinite(cheapest)) return 0;
+    return Math.min(cheapest, cap, itemsCents);
+  }
+  return Math.min(cap, itemsCents);
+}
+
 export function quotePromo(discount: DiscountRow | null, lines: QuoteLine[], code: string): QuoteOk | QuoteFail {
-  if (!discount) return { ok: false, code: "promo_unknown" };
+  if (!discount || discount.code !== code || !isPromoType(discount.type)) return { ok: false, code: "promo_unknown" };
+  if (!Number.isInteger(discount.min_count) || discount.min_count < 0) return { ok: false, code: "promo_unknown" };
+  if (!Number.isInteger(discount.used_number) || !Number.isInteger(discount.available_number)) {
+    return { ok: false, code: "promo_unknown" };
+  }
   if (discount.used_number >= discount.available_number) return { ok: false, code: "promo_exhausted" };
   const qty = lines.reduce((sum, line) => sum + line.quantity, 0);
-  if (qty < discount.min_count) return { ok: false, code: "promo_min_count" };
+  if (!Number.isSafeInteger(qty) || qty < discount.min_count) return { ok: false, code: "promo_min_count" };
   const itemsCents = itemsCentsOf(lines);
-  let discountCents = 0;
-  if (discount.type === "percent") {
-    const percent = discount.percent_off ?? 0;
-    discountCents = Math.floor((itemsCents * percent) / 100);
-  } else if (discount.type === "free") {
-    const cheapest = lines.reduce((min, line) => Math.min(min, line.unitPriceCents), Number.POSITIVE_INFINITY);
-    const cap = discount.amount_cents ?? 0;
-    discountCents = Number.isFinite(cheapest) ? Math.min(cheapest, cap) : 0;
-  } else {
-    discountCents = Math.min(discount.amount_cents ?? 0, itemsCents);
-  }
-  discountCents = Math.min(Math.max(discountCents, 0), itemsCents);
+  if (!Number.isSafeInteger(itemsCents)) return { ok: false, code: "promo_unknown" };
+  const discountCents = discountAmount(discount, lines, itemsCents);
+  if (discountCents === null) return { ok: false, code: "promo_unknown" };
   return {
     ok: true,
     type: discount.type,
@@ -88,13 +128,14 @@ export type PlaceOrderInput = {
   };
   lines: { variantId: string; quantity: number }[];
   promoCode?: string;
+  idempotencyKey?: string;
   now?: string;
 };
 
 export type PlacedOrder = {
   id: string;
   orderNumber: string;
-  status: "pending";
+  status: OrderStatus;
   itemsCents: number;
   deliveryCents: number;
   discountCents: number;
@@ -113,7 +154,7 @@ export type PlacedOrder = {
 };
 
 export type PlaceOrderResult =
-  | { ok: true; order: PlacedOrder }
+  | { ok: true; order: PlacedOrder; replayed: boolean }
   | { ok: false; code: "validation" | "stock_conflict" | "promo_unknown" | "promo_exhausted" | "promo_min_count"; items?: StockConflictItem[] };
 
 function availableOf(row: VariantRow): number {
@@ -151,17 +192,142 @@ async function loadVariants(sql: SqlPort, ids: string[]): Promise<VariantRow[]> 
   );
 }
 
+function errorText(err: unknown): string {
+  const parts: string[] = [];
+  const seen = new Set<unknown>();
+  let current: unknown = err;
+  while (current && !seen.has(current) && parts.length < 6) {
+    seen.add(current);
+    if (current instanceof Error) {
+      parts.push(current.message);
+      current = current.cause;
+      continue;
+    }
+    parts.push(String(current));
+    break;
+  }
+  return parts.join("\n");
+}
+
 function isGuard(err: unknown, token: string): boolean {
-  return err instanceof Error && err.message.includes(token);
+  return errorText(err).includes(token);
+}
+
+function customerOk(customer: PlaceOrderInput["customer"]): boolean {
+  const name = customer.fullName.trim();
+  const city = customer.city.trim();
+  const social = customer.socialHandle?.trim() ?? "";
+  const comment = customer.comment?.trim() ?? "";
+  return name.length >= 1
+    && name.length <= 120
+    && /^\d{8}$/.test(customer.phone)
+    && customer.governorateId.length > 0
+    && customer.delegationId.length > 0
+    && city.length >= 1
+    && city.length <= 80
+    && social.length <= 160
+    && comment.length <= 500;
+}
+
+const IDEMPOTENCY_KEY = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+type StoredLine = {
+  variant_id: string;
+  item_code: string;
+  display_name: string;
+  size: string;
+  reference: string;
+  quantity: number;
+  unit_price_cents: number;
+  line_total_cents: number;
+};
+
+type StoredOrder = {
+  id: string;
+  order_number: string;
+  status: OrderStatus;
+  full_name: string;
+  phone: string;
+  governorate_id: string;
+  delegation_id: string;
+  city: string;
+  social_handle: string | null;
+  locale: Locale;
+  items_cents: number;
+  delivery_cents: number;
+  discount_cents: number;
+  total_cents: number;
+  promo_code: string | null;
+  lines: StoredLine[];
+};
+
+async function readStoredOrder(sql: SqlPort, key: string): Promise<StoredOrder | undefined> {
+  const header = await sql.get<Omit<StoredOrder, "lines">>(
+    `SELECT id, order_number, status, full_name, phone, governorate_id, delegation_id, city,
+            social_handle, locale, items_cents, delivery_cents, discount_cents, total_cents, promo_code
+     FROM orders WHERE idempotency_key = ?`,
+    [key],
+  );
+  if (!header) return undefined;
+  const lines = await sql.all<StoredLine>(
+    `SELECT variant_id, item_code, display_name, size, reference, quantity, unit_price_cents, line_total_cents
+     FROM order_lines WHERE order_id = ?`,
+    [header.id],
+  );
+  return { ...header, lines };
+}
+
+function sameCheckout(stored: StoredOrder, input: PlaceOrderInput): boolean {
+  const social = input.customer.socialHandle?.trim() || null;
+  const promo = input.promoCode?.trim() || null;
+  if (stored.locale !== input.locale) return false;
+  if (stored.full_name !== input.customer.fullName.trim()) return false;
+  if (stored.phone !== input.customer.phone) return false;
+  if (stored.governorate_id !== input.customer.governorateId) return false;
+  if (stored.delegation_id !== input.customer.delegationId) return false;
+  if (stored.city !== input.customer.city.trim()) return false;
+  if ((stored.social_handle ?? null) !== social) return false;
+  if ((stored.promo_code ?? null) !== promo) return false;
+  const wanted = [...input.lines].sort((a, b) => a.variantId.localeCompare(b.variantId));
+  const got = [...stored.lines].sort((a, b) => a.variant_id.localeCompare(b.variant_id));
+  if (wanted.length !== got.length) return false;
+  return wanted.every((line, index) => line.variantId === got[index]?.variant_id && line.quantity === got[index]?.quantity);
+}
+
+function toPlaced(stored: StoredOrder): PlacedOrder {
+  return {
+    id: stored.id,
+    orderNumber: stored.order_number,
+    status: stored.status,
+    itemsCents: stored.items_cents,
+    deliveryCents: stored.delivery_cents,
+    discountCents: stored.discount_cents,
+    totalCents: stored.total_cents,
+    promoCode: stored.promo_code,
+    lines: stored.lines.map((line) => ({
+      variantId: line.variant_id,
+      itemCode: line.item_code,
+      displayName: line.display_name,
+      size: line.size,
+      reference: line.reference,
+      quantity: line.quantity,
+      unitPriceCents: line.unit_price_cents,
+      lineTotalCents: line.line_total_cents,
+    })),
+  };
 }
 
 export async function placeOrder(sql: SqlPort, input: PlaceOrderInput): Promise<PlaceOrderResult> {
-  const seen = new Set<string>();
-  for (const line of input.lines) {
-    if (seen.has(line.variantId) || line.quantity < 1) {
-      return { ok: false, code: "validation" };
+  const linesOk = validateCartLines(input.lines);
+  if (!linesOk.ok || !customerOk(input.customer)) return { ok: false, code: "validation" };
+  const idempotencyKey = input.idempotencyKey?.trim() || undefined;
+  if (idempotencyKey && !IDEMPOTENCY_KEY.test(idempotencyKey)) return { ok: false, code: "validation" };
+  if (idempotencyKey) {
+    const existing = await readStoredOrder(sql, idempotencyKey);
+    if (existing) {
+      if (!sameCheckout(existing, input)) return { ok: false, code: "validation" };
+      return { ok: true, order: toPlaced(existing), replayed: true };
     }
-    seen.add(line.variantId);
   }
   const delegation = await sql.get<{ id: string; governorate_id: string }>(
     "SELECT id, governorate_id FROM delegations WHERE id = ?",
@@ -173,28 +339,32 @@ export async function placeOrder(sql: SqlPort, input: PlaceOrderInput): Promise<
 
   const rows = await loadVariants(sql, input.lines.map((line) => line.variantId));
   if (rows.length !== input.lines.length) return { ok: false, code: "validation" };
+  if (rows.some((row) => !Number.isInteger(row.price_cents) || row.price_cents < 0 || !Number.isSafeInteger(row.price_cents))) {
+    return { ok: false, code: "validation" };
+  }
   const conflicts = conflictItems(rows, input.lines);
   if (conflicts.length > 0) return { ok: false, code: "stock_conflict", items: conflicts };
 
   let discountCents = 0;
   let promoCode: string | null = null;
-  if (input.promoCode) {
+  const promoCodeInput = input.promoCode?.trim() || undefined;
+  if (promoCodeInput) {
     const discount = await sql.get<DiscountRow>(
       `SELECT code, type, percent_off, amount_cents, min_count, available_number, used_number
        FROM discounts WHERE code = ?`,
-      [input.promoCode],
+      [promoCodeInput],
     );
     const quote = quotePromo(
-      discount ? { ...discount, type: discount.type as PromoType } : null,
+      discount && isPromoType(discount.type) ? { ...discount, type: discount.type } : null,
       input.lines.map((line) => {
         const row = rows.find((item) => item.id === line.variantId)!;
         return { unitPriceCents: row.price_cents, quantity: line.quantity };
       }),
-      input.promoCode,
+      promoCodeInput,
     );
     if (!quote.ok) return quote;
     discountCents = quote.discountCents;
-    promoCode = input.promoCode;
+    promoCode = promoCodeInput;
   }
 
   const priced = input.lines.map((line) => {
@@ -232,18 +402,18 @@ export async function placeOrder(sql: SqlPort, input: PlaceOrderInput): Promise<
       sql: `INSERT INTO orders (
         id, order_number, status, full_name, phone, governorate_id, delegation_id, city,
         social_handle, comment, locale, items_cents, delivery_cents, discount_cents, total_cents,
-        promo_code, alert_sent_at, created_at, updated_at
+        promo_code, idempotency_key, alert_sent_at, created_at, updated_at
       ) VALUES (
         ?, (SELECT printf('POC-%04d', last_value) FROM order_counters WHERE id = 'order'),
-        'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?
+        'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?
       )`,
       params: [
         orderId,
-        input.customer.fullName,
+        input.customer.fullName.trim(),
         input.customer.phone,
         input.customer.governorateId,
         input.customer.delegationId,
-        input.customer.city,
+        input.customer.city.trim(),
         input.customer.socialHandle?.trim() || null,
         input.customer.comment?.trim() || null,
         input.locale,
@@ -252,6 +422,7 @@ export async function placeOrder(sql: SqlPort, input: PlaceOrderInput): Promise<
         discountCents,
         itemsCents + DELIVERY_FEE_CENTS - discountCents,
         promoCode,
+        idempotencyKey ?? null,
         now,
         now,
       ],
@@ -283,13 +454,25 @@ export async function placeOrder(sql: SqlPort, input: PlaceOrderInput): Promise<
       const fresh = await loadVariants(sql, input.lines.map((line) => line.variantId));
       return { ok: false, code: "stock_conflict", items: conflictItems(fresh, input.lines) };
     }
+    if (idempotencyKey && isGuard(err, "idempotency_key")) {
+      const raced = await readStoredOrder(sql, idempotencyKey);
+      if (raced && sameCheckout(raced, input)) return { ok: true, order: toPlaced(raced), replayed: true };
+      return { ok: false, code: "validation" };
+    }
     throw err;
   }
 
   const stored = await sql.get<{ order_number: string }>("SELECT order_number FROM orders WHERE id = ?", [orderId]);
-  if (!stored) return { ok: false, code: "validation" };
+  if (!stored) {
+    if (idempotencyKey) {
+      const raced = await readStoredOrder(sql, idempotencyKey);
+      if (raced && sameCheckout(raced, input)) return { ok: true, order: toPlaced(raced), replayed: true };
+    }
+    return { ok: false, code: "validation" };
+  }
   return {
     ok: true,
+    replayed: false,
     order: {
       id: orderId,
       orderNumber: stored.order_number,
