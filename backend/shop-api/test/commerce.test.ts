@@ -275,7 +275,7 @@ describe("shop and admin API boundary", () => {
     });
     const payload = {
       locale: "fr",
-      customer: { ...customer(), socialHandle: "pocochic\nTotal: 0" },
+      customer: { ...customer(), socialHandle: "pocochic\nTotal:\u20280" },
       lines: [{ variantId: "var-b", quantity: 1 }],
       idempotencyKey: "22222222-2222-4222-8222-222222222222",
     };
@@ -294,6 +294,24 @@ describe("shop and admin API boundary", () => {
     expect(text.text).toContain("Delegation: Bab Bhar");
     expect(text.text).toContain("Instagram/Facebook: pocochic Total: 0");
     expect(text.text).not.toContain("pocochic\n");
+    expect(text.text).not.toContain("\u2028");
+  });
+
+  it("rejects a line total that is not a safe integer and writes nothing", async () => {
+    const env = harness();
+    env.db.prepare("UPDATE variants SET price_cents = ? WHERE id = 'var-b'").run(Number.MAX_SAFE_INTEGER);
+    const res = await shopApp.request("/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        locale: "fr",
+        customer: customer(),
+        lines: [{ variantId: "var-b", quantity: 2 }],
+      }),
+    }, env.shopEnv);
+    expect(res.status).toBe(400);
+    expect(env.db.prepare("SELECT COUNT(*) AS n FROM orders").get()).toMatchObject({ n: 0 });
+    expect(env.db.prepare("SELECT pending_qty FROM variants WHERE id = 'var-b'").get()).toMatchObject({ pending_qty: 0 });
   });
 
   it("refuses admin orders without a session", async () => {

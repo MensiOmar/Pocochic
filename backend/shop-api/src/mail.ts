@@ -9,7 +9,7 @@ function tnd(cents: number): string {
 }
 
 function oneLine(value: string): string {
-  return value.replace(/[\r\n]+/g, " ").trim();
+  return value.replace(/[\r\n\u2028\u2029]+/g, " ").trim();
 }
 
 export async function notifyShopOfOrder(env: Bindings, sql: SqlPort, order: PlacedOrder): Promise<void> {

@@ -339,7 +339,11 @@ export async function placeOrder(sql: SqlPort, input: PlaceOrderInput): Promise<
 
   const rows = await loadVariants(sql, input.lines.map((line) => line.variantId));
   if (rows.length !== input.lines.length) return { ok: false, code: "validation" };
-  if (rows.some((row) => !Number.isInteger(row.price_cents) || row.price_cents < 0 || !Number.isSafeInteger(row.price_cents))) {
+  if (input.lines.some((line) => {
+    const row = rows.find((item) => item.id === line.variantId);
+    if (!row || !Number.isInteger(row.price_cents) || row.price_cents < 0 || !Number.isSafeInteger(row.price_cents)) return true;
+    return !Number.isSafeInteger(row.price_cents * line.quantity);
+  })) {
     return { ok: false, code: "validation" };
   }
   const conflicts = conflictItems(rows, input.lines);
@@ -381,6 +385,7 @@ export async function placeOrder(sql: SqlPort, input: PlaceOrderInput): Promise<
     };
   });
   const itemsCents = priced.reduce((sum, line) => sum + line.lineTotalCents, 0);
+  if (!Number.isSafeInteger(itemsCents)) return { ok: false, code: "validation" };
   const now = input.now ?? new Date().toISOString();
   const orderId = ulid();
   const statements = [
