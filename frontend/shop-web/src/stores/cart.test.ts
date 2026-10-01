@@ -38,6 +38,8 @@ describe("cart", () => {
     expect(cart.add(line)).toBe(true);
     expect(cart.add(line)).toBe(false);
     expect(cart.lines[0].quantity).toBe(2);
+    expect(cart.add({ ...line, availableQty: 5 })).toBe(false);
+    expect(cart.lines[0].availableQty).toBe(2);
     expect(cart.itemsCents).toBe(9000);
     expect(cart.deliveryCents).toBe(800);
     expect(cart.totalCents).toBe(9800);

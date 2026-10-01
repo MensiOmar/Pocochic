@@ -8,13 +8,22 @@ export function useStyles() {
 
   async function load() {
     state.value = "loading";
-    const res = await api.styles.$get();
-    if (!res.ok) {
+    try {
+      const res = await api.styles.$get();
+      if (!res.ok) {
+        state.value = "error";
+        return;
+      }
+      const parsed = styleListItemSchema.array().safeParse(await res.json());
+      if (!parsed.success) {
+        state.value = "error";
+        return;
+      }
+      items.value = parsed.data;
+      state.value = "ready";
+    } catch {
       state.value = "error";
-      return;
     }
-    items.value = styleListItemSchema.array().parse(await res.json());
-    state.value = "ready";
   }
 
   return { items, state, load };

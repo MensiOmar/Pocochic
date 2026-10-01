@@ -10,6 +10,7 @@ const props = defineProps<{ item: StyleListItem; locale: Locale }>();
 const emit = defineEmits<{ add: [StyleListItem] }>();
 
 const src = computed(() => catalogSrc(props.item.imagePath));
+const shownCents = computed(() => props.item.soleVariant?.priceCents ?? props.item.priceCents);
 const range = computed(() => sizeRange(props.item.sizes));
 const detail = computed(() => (props.item.isSoldOut ? t(props.locale, "soldOut") : (range.value ?? "")));
 </script>
@@ -49,7 +50,7 @@ const detail = computed(() => (props.item.isSoldOut ? t(props.locale, "soldOut")
       </p>
       <div class="mt-1 flex items-start justify-between gap-3">
         <h2 class="min-w-0 font-heading text-lg font-semibold leading-7">{{ item.displayName }}</h2>
-        <PriceTag :cents="item.priceCents" class="h-7" />
+        <PriceTag :cents="shownCents" class="h-7" />
       </div>
       <RouterLink
         :to="`/${locale}/p/${item.slug}`"

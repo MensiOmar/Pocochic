@@ -5,7 +5,7 @@ import { useRoute } from "vue-router";
 import { catalogSrc } from "../api";
 import { lineMeta, refreshCart, requestPromoQuote, type PromoErrorKind } from "../cart-sync";
 import PriceTag from "../components/PriceTag.vue";
-import { t } from "../i18n";
+import { promoErrorMessage, t } from "../i18n";
 import { useCartStore } from "../stores/cart";
 
 const route = useRoute();
@@ -17,15 +17,9 @@ const refreshComplete = ref(cart.lines.length === 0);
 const notice = ref(false);
 const promoError = ref<PromoErrorKind | null>(null);
 let alive = true;
+let quoteGeneration = 0;
 
-const promoMessage = computed(() => {
-  if (promoError.value === "promo_unknown") return t(locale.value, "promoUnknown");
-  if (promoError.value === "promo_exhausted") return t(locale.value, "promoExhausted");
-  if (promoError.value === "promo_min_count") return t(locale.value, "promoMin");
-  if (promoError.value === "unavailable") return t(locale.value, "promoUnavailable");
-  if (promoError.value === "unconfirmed") return t(locale.value, "promoUnconfirmed");
-  return "";
-});
+const promoMessage = computed(() => (promoError.value ? promoErrorMessage(locale.value, promoError.value) : ""));
 const applyDisabled = computed(() => locked.value || !refreshComplete.value);
 
 function atCap(line: StoredCartLine) {
@@ -74,19 +68,18 @@ async function openBag() {
 }
 
 async function runQuote() {
+  const generation = ++quoteGeneration;
   const code = cart.promoCode.trim();
-  if (!code || !refreshComplete.value || cart.lines.length === 0) {
+  const lines = cart.lines.map((line) => ({ variantId: line.variantId, quantity: line.quantity }));
+  if (!code || !refreshComplete.value || lines.length === 0) {
     locked.value = false;
     return;
   }
   locked.value = true;
   promoError.value = null;
   cart.dropQuote();
-  const result = await requestPromoQuote(
-    code,
-    cart.lines.map((line) => ({ variantId: line.variantId, quantity: line.quantity })),
-  );
-  if (!alive) return;
+  const result = await requestPromoQuote(code, lines);
+  if (!alive || generation !== quoteGeneration) return;
   if (result.ok) {
     cart.acceptQuote(result.quote);
     draft.value = result.quote.code;

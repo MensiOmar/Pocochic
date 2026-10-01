@@ -9,6 +9,16 @@ export const useCheckoutDraftStore = defineStore("checkout-draft", () => {
   const delegationId = ref("");
   const social = ref("");
   const address = ref("");
+  const idempotencyKey = ref(crypto.randomUUID());
+  const idempotencyFingerprint = ref("");
+
+  function keyFor(fingerprint: string): string {
+    if (fingerprint !== idempotencyFingerprint.value) {
+      idempotencyFingerprint.value = fingerprint;
+      idempotencyKey.value = crypto.randomUUID();
+    }
+    return idempotencyKey.value;
+  }
 
   function clear() {
     firstName.value = "";
@@ -18,7 +28,9 @@ export const useCheckoutDraftStore = defineStore("checkout-draft", () => {
     delegationId.value = "";
     social.value = "";
     address.value = "";
+    idempotencyKey.value = crypto.randomUUID();
+    idempotencyFingerprint.value = "";
   }
 
-  return { firstName, lastName, phone, governorateId, delegationId, social, address, clear };
+  return { firstName, lastName, phone, governorateId, delegationId, social, address, keyFor, clear };
 });

@@ -29,6 +29,7 @@ describe("checkout fields", () => {
   it("joins both names and keeps an 8-digit phone", () => {
     expect(joinName("  Amira ", " Ben   Salem ")).toBe("Amira Ben Salem");
     expect(phoneDigits("22 123 456")).toBe("22123456");
+    expect(phoneDigits("٢٢ ١٢٣ ٤٥٦")).toBe("22123456");
     expect(checkoutIssues(fields)).toEqual([]);
   });
 

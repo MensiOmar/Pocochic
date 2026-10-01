@@ -1,4 +1,5 @@
 import { LOCALE_STORAGE_KEY, type Locale } from "@pocochic/contracts";
+import type { PromoErrorKind } from "./cart-sync";
 
 const copy = {
   fr: {
@@ -349,6 +350,18 @@ export type CopyKey = keyof typeof copy.fr;
 
 export function t(locale: Locale, key: CopyKey): string {
   return copy[locale][key] ?? copy.fr[key];
+}
+
+const promoCopy = {
+  promo_unknown: "promoUnknown",
+  promo_exhausted: "promoExhausted",
+  promo_min_count: "promoMin",
+  unavailable: "promoUnavailable",
+  unconfirmed: "promoUnconfirmed",
+} as const satisfies Record<PromoErrorKind, CopyKey>;
+
+export function promoErrorMessage(locale: Locale, kind: PromoErrorKind): string {
+  return t(locale, promoCopy[kind]);
 }
 
 function storage(): Storage | null {
