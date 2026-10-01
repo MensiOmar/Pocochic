@@ -1,0 +1,13 @@
+{
+  "name": "@pocochic/contracts",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Zod contracts shared by POCOCHIC APIs and Vue apps",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "zod": "3.23.8"
+  }
+}

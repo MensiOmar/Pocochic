@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-tertiary: var(--tertiary);
+  --color-tertiary-foreground: var(--tertiary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --font-sans: var(--font-sans);
+  --font-heading: var(--font-heading);
+  --font-mono: var(--font-mono);
+}
+
+:root,
+[data-theme="light"] {
+  --background: #fffdf8;
+  --foreground: #0f1015;
+  --primary: #f58684;
+  --primary-foreground: #0f1015;
+  --secondary: #f2e6dd;
+  --secondary-foreground: #0f1015;
+  --tertiary: #8ca785;
+  --tertiary-foreground: #0f1015;
+  --muted: #f1e6dd;
+  --muted-foreground: #676b4f;
+  --accent: #f4c5cc;
+  --accent-foreground: #0f1015;
+  --card: #fffff9;
+  --card-foreground: #0f1015;
+  --destructive: #aa1945;
+  --destructive-foreground: #fffff9;
+  --border: #351040;
+  --input: #e5d5cd;
+  --ring: #c74375;
+  --radius: 0.75rem;
+  --font-sans: Inter, sans-serif;
+  --font-heading: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --primary-text: #be5455;
+  --secondary-text: #7e736c;
+  --tertiary-text: #637c5c;
+  --accent-text: #946a71;
+  --destructive-text: #aa1945;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+#app {
+  min-height: 100vh;
+}
+
+.text-primary { color: var(--primary-text, var(--primary)); }
+.text-secondary { color: var(--secondary-text, var(--secondary)); }
+.text-tertiary { color: var(--tertiary-text, var(--tertiary)); }
+.text-accent { color: var(--accent-text, var(--accent)); }
+.text-destructive { color: var(--destructive-text, var(--destructive)); }

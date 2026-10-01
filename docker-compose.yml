@@ -15,18 +15,15 @@ services:
     restart: unless-stopped
 
   minio:
-    image: minio/minio:latest
+    # minio/minio was removed from Docker Hub. S3Mock speaks the same path-style S3 API on :9090.
+    image: adobe/s3mock:3.9.1
     container_name: pocochic-minio
     ports:
-      - "9000:9000"    # API
-      - "9001:9001"    # Console
+      - "9000:9090"    # S3 API
+      - "9001:9191"    # HTTPS
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
-    command: server /data --console-address ":9001"
-    volumes:
-      - minio-data:/data
+      COM_ADOBE_TESTING_S3MOCK_STORE_INITIAL_BUCKETS: ${MINIO_BUCKET:-pocochic-catalog}
+      COM_ADOBE_TESTING_S3MOCK_STORE_REGION: ${MINIO_REGION:-us-east-1}
     restart: unless-stopped
 
-volumes:
-  minio-data:
+

@@ -4,20 +4,28 @@
   "private": true,
   "description": "Admin Hono API (Cloudflare Worker) for POCOCHIC",
   "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
-    "dev": "wrangler dev",
+    "dev": "vite-node src/node.ts",
+    "dev:worker": "wrangler dev",
     "deploy": "wrangler deploy",
-    "db:generate": "npm run db:generate --workspace=@pocochic/db",
-    "db:migrate": "npm run db:migrate --workspace=@pocochic/db",
     "build": "wrangler deploy --dry-run",
-    "test": "echo 'tests for admin-api'"
+    "test": "vitest run"
   },
   "dependencies": {
+    "@hono/zod-validator": "0.4.1",
+    "@pocochic/contracts": "file:../contracts",
+    "@pocochic/db": "file:../db",
     "hono": "4.6.8",
-    "@pocochic/db": "workspace:*"
+    "zod": "3.23.8"
   },
   "devDependencies": {
-    "wrangler": "3.78.0",
-    "@cloudflare/workers-types": "4.20240925.0"
+    "@cloudflare/workers-types": "4.20240925.0",
+    "@hono/node-server": "1.13.1",
+    "better-sqlite3": "12.11.1",
+    "vitest": "2.1.2",
+    "wrangler": "3.78.0"
   }
 }

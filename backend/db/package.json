@@ -2,26 +2,33 @@
   "name": "@pocochic/db",
   "version": "0.0.0",
   "private": true,
-  "description": "Shared Drizzle schema and migrations for POCOCHIC (D1 + local SQLite)",
+  "description": "Shared Drizzle schema, commerce writes, and v1 import for POCOCHIC",
   "type": "module",
-  "main": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./schema": "./src/schema.ts"
+    "./schema": "./src/schema.ts",
+    "./commerce": "./src/commerce.ts",
+    "./sql": "./src/sql-port.ts",
+    "./sqlite": "./src/sqlite-port.ts"
   },
   "scripts": {
-    "dev": "echo 'db package has no runtime; use db:generate / db:migrate'",
+    "dev": "echo 'db package has no runtime; use db:generate / db:migrate / import:v1'",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
+    "import:v1": "vite-node scripts/import-v1.ts",
     "build": "echo 'no build for schema package'",
-    "test": "echo 'add tests in future'"
+    "test": "vitest run"
   },
   "dependencies": {
-    "drizzle-orm": "0.33.0"
+    "@aws-sdk/client-s3": "3.658.1",
+    "@pocochic/contracts": "file:../contracts",
+    "drizzle-orm": "0.33.0",
+    "sharp": "0.33.5"
   },
   "devDependencies": {
+    "better-sqlite3": "12.11.1",
     "drizzle-kit": "0.24.2",
-    "better-sqlite3": "11.3.0"
+    "vitest": "2.1.2"
   }
 }

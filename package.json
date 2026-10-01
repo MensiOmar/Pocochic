@@ -10,7 +10,7 @@
   ],
   "scripts": {
     "prepare": "husky",
-    "dev": "echo 'Use: npm run dev --workspace=@pocochic/shop-api (after: set -a; source .env; set +a from inside pocochic/ ) or per package'",
+    "dev": "bash scripts/dev.sh",
     "dev:shop": "echo 'To run with env: set -a; source .env; set +a; npm run dev --workspace=@pocochic/shop-api  (cd pocochic first)'",
     "dev:admin": "echo 'To run with env: set -a; source .env; set +a; npm run dev --workspace=@pocochic/admin-api  (cd pocochic first)'",
     "build": "npm run build --workspaces --if-present",
