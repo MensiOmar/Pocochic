@@ -212,6 +212,17 @@ describe("shop and admin API boundary", () => {
     expect(slug.status).toBe(404);
     const traversal = await shopApp.request("/catalog/styles/..%2f..%2f.env.webp", {}, shopEnv);
     expect(traversal.status).toBe(404);
+    const image = await shopApp.request("/catalog/styles/tee-1.webp", {}, {
+      ...shopEnv,
+      CATALOG: {
+        get: async () => ({ body: new ReadableStream(), httpMetadata: { contentType: "image/webp" } }),
+      },
+    });
+    expect(image.status).toBe(200);
+    expect(image.headers.get("Cross-Origin-Resource-Policy")).toBe("cross-origin");
+    expect(image.headers.get("Content-Type")).toBe("image/webp");
+    const styles = await shopApp.request("/styles", {}, shopEnv);
+    expect(styles.headers.get("Cross-Origin-Resource-Policy")).toBe("same-origin");
     db.prepare(
       "INSERT INTO discounts (id, code, type, percent_off, amount_cents, min_count, available_number, used_number, sheet_used_flag) VALUES ('d4', 'TOO', 'percent', 250, NULL, 1, 5, 0, 0)",
     ).run();
