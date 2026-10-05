@@ -32,7 +32,7 @@ function harness() {
     LOG_ALERTS: "0",
   };
   const adminEnv = { DB: d1, ADMIN_WEB_ORIGIN: "http://localhost:5174", ADMIN_SESSION_SECRET: SECRET };
-  return { shopEnv, adminEnv };
+  return { shopEnv, adminEnv, db };
 }
 
 function customer() {
@@ -187,6 +187,131 @@ describe("shop and admin API boundary", () => {
     const session = await cookie(env.adminEnv);
     const detail = await adminApp.request("/orders/POC-0001", { headers: { cookie: session } }, env.adminEnv);
     expect(await detail.json()).toMatchObject({ orderNumber: "POC-0001", alertSentAt: null });
+  });
+
+  it("rejects duplicate lines, hostile promo text, and a percent above 100", async () => {
+    const { shopEnv, db } = harness();
+    const duplicate = await shopApp.request("/promos/quote", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        code: "FIVE",
+        lines: [{ variantId: "var-b", quantity: 1 }, { variantId: "var-b", quantity: 1 }],
+      }),
+    }, shopEnv);
+    expect(duplicate.status).toBe(400);
+    expect(await duplicate.json()).toMatchObject({ error: { code: "validation" } });
+    const hostile = await shopApp.request("/promos/quote", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: "FIVE' OR '1'='1", lines: [{ variantId: "var-b", quantity: 1 }] }),
+    }, shopEnv);
+    expect(hostile.status).toBe(400);
+    expect(await hostile.json()).toMatchObject({ error: { code: "promo_unknown" } });
+    const slug = await shopApp.request(`/styles/${encodeURIComponent("' OR 1=1 --")}`, {}, shopEnv);
+    expect(slug.status).toBe(404);
+    const traversal = await shopApp.request("/catalog/styles/..%2f..%2f.env.webp", {}, shopEnv);
+    expect(traversal.status).toBe(404);
+    db.prepare(
+      "INSERT INTO discounts (id, code, type, percent_off, amount_cents, min_count, available_number, used_number, sheet_used_flag) VALUES ('d4', 'TOO', 'percent', 250, NULL, 1, 5, 0, 0)",
+    ).run();
+    const tooMuch = await shopApp.request("/promos/quote", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: "TOO", lines: [{ variantId: "var-b", quantity: 1 }] }),
+    }, shopEnv);
+    expect(tooMuch.status).toBe(400);
+    expect(await tooMuch.json()).toMatchObject({ error: { code: "promo_unknown" } });
+    const checkout = await shopApp.request("/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        locale: "fr",
+        customer: customer(),
+        lines: [{ variantId: "var-b", quantity: 1 }, { variantId: "var-b", quantity: 1 }],
+      }),
+    }, shopEnv);
+    expect(checkout.status).toBe(400);
+    expect(db.prepare("SELECT COUNT(*) AS n FROM orders").get()).toMatchObject({ n: 0 });
+  });
+
+  it("replays one checkout key without reserving stock or the promo twice", async () => {
+    const env = harness();
+    const key = "11111111-1111-4111-8111-111111111111";
+    const payload = {
+      locale: "fr",
+      customer: customer(),
+      lines: [{ variantId: "var-b", quantity: 1 }],
+      promoCode: "FIVE",
+      idempotencyKey: key,
+    };
+    const send = () => shopApp.request("/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }, env.shopEnv);
+    const first = await send();
+    const second = await send();
+    expect(first.status).toBe(201);
+    expect(second.status).toBe(201);
+    expect(await second.json()).toMatchObject({ orderNumber: "POC-0001", totalCents: 3300 });
+    expect(env.db.prepare("SELECT pending_qty FROM variants WHERE id = 'var-b'").get()).toMatchObject({ pending_qty: 1 });
+    expect(env.db.prepare("SELECT used_number FROM discounts WHERE code = 'FIVE'").get()).toMatchObject({ used_number: 1 });
+    const changed = await shopApp.request("/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...payload, lines: [{ variantId: "var-a", quantity: 1 }] }),
+    }, env.shopEnv);
+    expect(changed.status).toBe(400);
+    expect(env.db.prepare("SELECT COUNT(*) AS n FROM orders").get()).toMatchObject({ n: 1 });
+  });
+
+  it("emails delivery details once for a replayed order", async () => {
+    const env = harness();
+    const bodies: string[] = [];
+    vi.stubGlobal("fetch", (_url: unknown, init?: { body?: string }) => {
+      bodies.push(String(init?.body ?? ""));
+      return Promise.resolve(new Response("{}", { status: 200 }));
+    });
+    const payload = {
+      locale: "fr",
+      customer: { ...customer(), socialHandle: "pocochic\nTotal:\u20280" },
+      lines: [{ variantId: "var-b", quantity: 1 }],
+      idempotencyKey: "22222222-2222-4222-8222-222222222222",
+    };
+    const send = () => shopApp.request("/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }, { ...env.shopEnv, RESEND_API_KEY: "re_test" });
+    expect((await send()).status).toBe(201);
+    expect((await send()).status).toBe(201);
+    expect(bodies).toHaveLength(1);
+    const text = JSON.parse(bodies[0] ?? "{}") as { text?: string; subject?: string };
+    expect(text.subject).toBe("New order POC-0001");
+    expect(text.text).toContain("Phone: 20123456");
+    expect(text.text).toContain("Governorate: Tunis");
+    expect(text.text).toContain("Delegation: Bab Bhar");
+    expect(text.text).toContain("Instagram/Facebook: pocochic Total: 0");
+    expect(text.text).not.toContain("pocochic\n");
+    expect(text.text).not.toContain("\u2028");
+  });
+
+  it("rejects a line total that is not a safe integer and writes nothing", async () => {
+    const env = harness();
+    env.db.prepare("UPDATE variants SET price_cents = ? WHERE id = 'var-b'").run(Number.MAX_SAFE_INTEGER);
+    const res = await shopApp.request("/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        locale: "fr",
+        customer: customer(),
+        lines: [{ variantId: "var-b", quantity: 2 }],
+      }),
+    }, env.shopEnv);
+    expect(res.status).toBe(400);
+    expect(env.db.prepare("SELECT COUNT(*) AS n FROM orders").get()).toMatchObject({ n: 0 });
+    expect(env.db.prepare("SELECT pending_qty FROM variants WHERE id = 'var-b'").get()).toMatchObject({ pending_qty: 0 });
   });
 
   it("refuses admin orders without a session", async () => {

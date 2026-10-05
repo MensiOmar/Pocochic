@@ -128,6 +128,7 @@ export const checkoutRequestSchema = z.object({
   customer: checkoutCustomerSchema,
   lines: z.array(cartLineSchema).min(1).max(50),
   promoCode: z.string().trim().min(1).max(80).optional(),
+  idempotencyKey: z.string().uuid().optional(),
 });
 export type CheckoutRequest = z.infer<typeof checkoutRequestSchema>;
 
@@ -153,7 +154,7 @@ export type ThankYou = z.infer<typeof thankYouSchema>;
 export const checkoutResponseSchema = z.object({
   id: z.string(),
   orderNumber: z.string(),
-  status: z.literal("pending"),
+  status: orderStatusSchema,
   itemsCents: z.number().int(),
   deliveryCents: z.number().int(),
   discountCents: z.number().int(),

@@ -27,14 +27,17 @@ export const checkoutRoutes = factory.createApp().post(
       customer: body.customer,
       lines: body.lines,
       promoCode: body.promoCode,
+      idempotencyKey: body.idempotencyKey,
     });
     if (!result.ok) {
       const status = result.code === "stock_conflict" || result.code === "promo_exhausted" ? 409 : 400;
       return errorJson(c, status, result.code, result.code, result.items);
     }
-    const job = notifyShopOfOrder(c.env, c.var.sql, result.order);
-    if (c.env.AWAIT_ALERT === "1" || !c.executionCtx) await job;
-    else c.executionCtx.waitUntil(job);
+    if (!result.replayed) {
+      const job = notifyShopOfOrder(c.env, c.var.sql, result.order);
+      if (c.env.AWAIT_ALERT === "1" || !c.executionCtx) await job;
+      else c.executionCtx.waitUntil(job);
+    }
     return c.json({
       ...result.order,
       thankYou: await thankYou(c.var.sql, body.locale),
