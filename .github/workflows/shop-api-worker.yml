@@ -3,6 +3,10 @@ name: Deploy shop-api
 on:
   push:
     branches: [main]
+    paths:
+      - "backend/shop-api/**"
+      - "backend/db/**"
+      - "backend/contracts/**"
   workflow_dispatch:
 
 permissions:

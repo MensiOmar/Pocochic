@@ -3,6 +3,10 @@ name: Deploy shop-web
 on:
   push:
     branches: [main]
+    paths:
+      - "frontend/shop-web/**"
+      - "frontend/assets/**"
+      - "backend/contracts/**"
   workflow_dispatch:
 
 permissions:
