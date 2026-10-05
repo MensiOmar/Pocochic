@@ -1,0 +1,8 @@
+account_id                = "e6c4d69ffbb60b6bc9a454d9aaa7d6bf"
+d1_database_name          = "pocochic"
+d1_primary_location_hint  = "weur"
+d1_read_replication_mode  = "disabled"
+r2_bucket_name            = "pocochic-catalog"
+r2_location               = "weur"
+pages_project_name        = "pocochic-shop"
+pages_production_branch   = "main"

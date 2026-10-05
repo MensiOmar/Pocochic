@@ -5,8 +5,8 @@ compatibility_date = "2024-09-23"
 [vars]
 ADMIN_WEB_ORIGIN = "https://admin.example.com"
 
-# ADMIN_SESSION_SECRET and the shop D1 id are Worker secrets / dashboard values. Do not commit the secret.
+# Do not commit ADMIN_SESSION_SECRET. database_id matches the shared D1 database pocochic from infra/.
 [[d1_databases]]
 binding = "DB"
 database_name = "pocochic"
-database_id = "00000000-0000-0000-0000-000000000001"
+database_id = "59a5774b-c969-4d8f-bf63-f6b2a9940512"

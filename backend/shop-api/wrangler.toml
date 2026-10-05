@@ -3,15 +3,15 @@ main = "src/index.ts"
 compatibility_date = "2024-09-23"
 
 [vars]
-SHOP_WEB_ORIGIN = "https://shop.example.com"
+SHOP_WEB_ORIGIN = "https://pocochic-shop.pages.dev"
 SHOP_ALERT_EMAIL = "pocochicaccessories@gmail.com"
 SHOP_ALERT_FROM = "onboarding@resend.dev"
 
-# Replace database_id before the first real deploy. Local dev uses src/node.ts + pocochic/data/pocochic.db.
+# database_id comes from infra/ output d1_database_id. Local dev uses src/node.ts + pocochic/data/pocochic.db.
 [[d1_databases]]
 binding = "DB"
 database_name = "pocochic"
-database_id = "00000000-0000-0000-0000-000000000001"
+database_id = "59a5774b-c969-4d8f-bf63-f6b2a9940512"
 
 [[r2_buckets]]
 binding = "CATALOG"
