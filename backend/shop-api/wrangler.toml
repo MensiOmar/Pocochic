@@ -12,6 +12,7 @@ SHOP_ALERT_FROM = "onboarding@resend.dev"
 binding = "DB"
 database_name = "pocochic"
 database_id = "59a5774b-c969-4d8f-bf63-f6b2a9940512"
+migrations_dir = "../db/drizzle"
 
 [[r2_buckets]]
 binding = "CATALOG"
