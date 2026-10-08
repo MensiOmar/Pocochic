@@ -1,3 +1,4 @@
+import { ref } from "vue";
 import backgroundDark from "@assets/backgrounddark.png";
 import backgroundLight from "@assets/backgroundlight.png";
 import coin from "@assets/coin.png";
@@ -13,9 +14,31 @@ export const brandAssets: Record<ThemeMode, { logo: string; background: string }
 
 export const coinSrc = coin;
 
-/** Light is the only mode painted today. The dark pair is wired for the switcher. */
-export const themeMode: ThemeMode = "light";
+const THEME_KEY = "pocochic.theme.v1";
 
-export function applyTheme(mode: ThemeMode = themeMode) {
+function readTheme(): ThemeMode {
+  try {
+    const saved = globalThis.localStorage?.getItem(THEME_KEY);
+    if (saved === "dark" || saved === "light") return saved;
+  } catch {
+    /* keep light */
+  }
+  return "light";
+}
+
+/** Player navbar toggles this. Light is the default. */
+export const themeMode = ref<ThemeMode>(readTheme());
+
+export function applyTheme(mode: ThemeMode = themeMode.value) {
+  themeMode.value = mode;
   document.documentElement.dataset.theme = mode;
+  try {
+    globalThis.localStorage?.setItem(THEME_KEY, mode);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function toggleTheme() {
+  applyTheme(themeMode.value === "dark" ? "light" : "dark");
 }
