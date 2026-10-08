@@ -4,6 +4,7 @@ import { computed, onMounted, onUnmounted, ref } from "vue";
 import { useRoute } from "vue-router";
 import { catalogSrc } from "../api";
 import { lineMeta, refreshCart, requestPromoQuote, type PromoErrorKind } from "../cart-sync";
+import ArcadeKey from "../components/ArcadeKey.vue";
 import PriceTag from "../components/PriceTag.vue";
 import { promoErrorMessage, t } from "../i18n";
 import { useCartStore } from "../stores/cart";
@@ -157,20 +158,7 @@ function decrease(line: StoredCartLine) {
     <p class="mt-10 font-heading text-xs font-bold uppercase text-primary">{{ t(locale, "emptyKicker") }}</p>
     <h1 class="mt-3 text-balance font-heading text-3xl font-bold sm:text-4xl">{{ t(locale, "emptyTitle") }}</h1>
     <p class="mt-4 max-w-xl text-pretty text-base text-muted-foreground">{{ t(locale, "emptyBody") }}</p>
-    <RouterLink :to="`/${locale}/shop`" class="mt-8 inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-border bg-primary px-6 font-heading text-sm font-bold uppercase shadow-md">
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <line x1="6" x2="10" y1="12" y2="12" />
-        <line x1="8" x2="8" y1="10" y2="14" />
-        <line x1="15" x2="15.01" y1="13" y2="13" />
-        <line x1="18" x2="18.01" y1="11" y2="11" />
-        <rect width="20" height="12" x="2" y="6" rx="2" />
-      </svg>
-      {{ t(locale, "browseGoodies") }}
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="rtl:rotate-180" aria-hidden="true">
-        <path d="M5 12h14" />
-        <path d="m12 5 7 7-7 7" />
-      </svg>
-    </RouterLink>
+    <ArcadeKey class="mt-8" :to="`/${locale}/shop`">{{ t(locale, "browseGoodies") }}</ArcadeKey>
     <div class="mt-9 flex items-center gap-3 font-heading text-xs uppercase text-muted-foreground">
       <span class="h-2 w-2 bg-primary"></span>
       <span>{{ t(locale, "pressStart") }}</span>
@@ -185,14 +173,9 @@ function decrease(line: StoredCartLine) {
           <p class="font-heading text-xs font-bold uppercase text-primary">{{ t(locale, "playlistKicker") }}</p>
           <h1 class="mt-1 text-balance font-heading text-3xl font-bold sm:text-4xl">{{ t(locale, "bagTitle") }}</h1>
         </div>
-        <button
-          type="button"
-          class="min-h-11 cursor-pointer rounded-lg border-2 border-border bg-card px-4 font-heading text-xs font-bold uppercase shadow-md disabled:cursor-default disabled:opacity-40"
-          :disabled="locked"
-          @click="clearBag"
-        >
+        <ArcadeKey variant="text" tone="danger" :disabled="locked" @click="clearBag">
           {{ t(locale, "clearCart") }}
-        </button>
+        </ArcadeKey>
       </div>
       <p v-if="notice" role="status" class="mb-4 font-heading text-sm text-primary">{{ t(locale, "bagUpdated") }}</p>
       <div class="space-y-4">
@@ -211,34 +194,35 @@ function decrease(line: StoredCartLine) {
             <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
               <div class="flex flex-wrap items-center gap-2" role="group" :aria-label="t(locale, 'qty')">
                 <span class="font-heading text-sm">{{ t(locale, "qty") }}</span>
-                <button
-                  type="button"
-                  class="grid min-h-11 min-w-11 cursor-pointer place-items-center rounded-lg border-2 border-border bg-card font-heading text-lg font-bold disabled:cursor-default disabled:opacity-40"
+                <ArcadeKey
+                  variant="choice"
+                  square
                   :aria-label="t(locale, 'decreaseQty')"
                   :disabled="locked || line.quantity <= 1"
                   @click="decrease(line)"
                 >
                   −
-                </button>
+                </ArcadeKey>
                 <span class="min-w-6 text-center font-heading">{{ line.quantity }}</span>
-                <button
-                  type="button"
-                  class="grid min-h-11 min-w-11 cursor-pointer place-items-center rounded-lg border-2 border-border bg-card font-heading text-lg font-bold disabled:cursor-default disabled:opacity-40"
+                <ArcadeKey
+                  variant="choice"
+                  square
+                  plus
                   :aria-label="t(locale, 'increaseQty')"
                   :disabled="locked || atCap(line)"
                   @click="increase(line)"
                 >
                   +
-                </button>
-                <button
-                  type="button"
-                  class="min-h-11 cursor-pointer px-2 font-heading text-xs font-bold uppercase text-destructive disabled:cursor-default disabled:opacity-40"
+                </ArcadeKey>
+                <ArcadeKey
+                  variant="text"
+                  tone="danger"
                   :aria-label="`${t(locale, 'removeLine')} ${line.displayName}`"
                   :disabled="locked"
                   @click="removeLine(line.variantId)"
                 >
                   {{ t(locale, "removeLine") }}
-                </button>
+                </ArcadeKey>
               </div>
               <PriceTag :cents="line.unitPriceCents * line.quantity" large />
             </div>
@@ -279,33 +263,23 @@ function decrease(line: StoredCartLine) {
             :aria-describedby="promoMessage ? 'promo-error' : undefined"
             class="min-h-11 w-full rounded-lg border-2 border-input bg-card px-3 font-heading text-sm disabled:opacity-40"
           />
-          <button
-            type="submit"
-            class="min-h-11 cursor-pointer rounded-lg border-2 border-border bg-card px-4 font-heading text-xs font-bold uppercase disabled:cursor-default disabled:opacity-40"
-            :disabled="applyDisabled"
-          >
+          <ArcadeKey variant="choice" chip type="submit" :disabled="applyDisabled">
             {{ t(locale, "applyPromo") }}
-          </button>
-          <button
+          </ArcadeKey>
+          <ArcadeKey
             v-if="cart.quote"
-            type="button"
-            class="min-h-11 cursor-pointer rounded-lg border-2 border-border bg-card px-4 font-heading text-xs font-bold uppercase disabled:cursor-default disabled:opacity-40"
+            variant="text"
+            tone="danger"
             :aria-label="t(locale, 'clearPromoCode')"
             :disabled="locked"
             @click="clearCode"
           >
             {{ t(locale, "clearPromo") }}
-          </button>
+          </ArcadeKey>
         </div>
         <p v-if="promoMessage" id="promo-error" role="alert" class="mt-2 font-heading text-xs text-destructive">{{ promoMessage }}</p>
       </form>
-      <RouterLink :to="`/${locale}/checkout`" class="mt-5 flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-border bg-primary font-heading text-sm font-bold uppercase">
-        {{ t(locale, "checkout") }}
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="rtl:rotate-180" aria-hidden="true">
-          <path d="M5 12h14" />
-          <path d="m12 5 7 7-7 7" />
-        </svg>
-      </RouterLink>
+      <ArcadeKey block class="mt-5" :to="`/${locale}/checkout`">{{ t(locale, "checkout") }}</ArcadeKey>
     </aside>
   </div>
 </template>

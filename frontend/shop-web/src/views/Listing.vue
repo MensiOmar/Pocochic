@@ -3,6 +3,7 @@ import type { Locale, StyleListItem } from "@pocochic/contracts";
 import { computed, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useStyles } from "../catalog";
+import ArcadeKey from "../components/ArcadeKey.vue";
 import ProductCard from "../components/ProductCard.vue";
 import { t } from "../i18n";
 import { pageWindow } from "../paging";
@@ -75,9 +76,9 @@ onMounted(load);
     <h1 class="mt-2 text-balance font-heading text-4xl font-bold">{{ t(locale, "allProducts") }}</h1>
     <p class="mt-2 text-pretty text-muted-foreground">{{ t(locale, "allProductsBody") }}</p>
     <div class="mt-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <button type="button" class="min-h-11 w-fit shrink-0 rounded-lg border-2 border-border bg-primary px-4 font-heading text-xs font-bold uppercase" aria-pressed="true" @click="writeQuery('', 1)">
+      <ArcadeKey variant="choice" chip state="on" class="w-fit shrink-0" @click="writeQuery('', 1)">
         {{ t(locale, "allItems") }}
-      </button>
+      </ArcadeKey>
       <label class="flex min-h-11 w-full items-center gap-3 rounded-lg border-2 border-border bg-card px-4 shadow-md sm:w-80">
         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-primary" aria-hidden="true">
           <circle cx="11" cy="11" r="8" />
@@ -97,7 +98,7 @@ onMounted(load);
     <p v-if="state === 'loading'" class="mt-10 font-heading">{{ t(locale, "loading") }}</p>
     <div v-else-if="state === 'error'" class="mt-10">
       <p class="font-heading">{{ t(locale, "error") }}</p>
-      <button type="button" class="mt-4 min-h-11 rounded-lg border-2 border-border bg-primary px-5 font-heading text-sm font-bold uppercase" @click="load">{{ t(locale, "retry") }}</button>
+      <ArcadeKey class="mt-4" @click="load">{{ t(locale, "retry") }}</ArcadeKey>
     </div>
     <template v-else>
       <p v-if="filtered.length === 0" class="mt-10 font-heading">{{ t(locale, "noResults") }}</p>
@@ -105,43 +106,34 @@ onMounted(load);
         <ProductCard v-for="item in paged.slice" :key="item.slug" :item="item" :locale="locale" @add="add" />
       </div>
       <nav v-if="paged.pages > 1" class="mt-9 flex items-center justify-center gap-2" :aria-label="t(locale, 'pagination')">
-        <button
-          type="button"
-          class="grid min-h-11 min-w-11 cursor-pointer place-items-center rounded-lg border-2 border-border bg-card shadow-md disabled:cursor-default disabled:opacity-40"
+        <ArcadeKey
+          variant="choice"
+          square
           :aria-label="t(locale, 'previous')"
           :disabled="paged.current <= 1"
           @click="writeQuery(queryText, paged.current - 1)"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="rtl:rotate-180" aria-hidden="true">
-            <path d="m15 18-6-6 6-6" />
-          </svg>
-        </button>
-        <button
-          type="button"
-          class="grid min-h-11 min-w-11 cursor-pointer place-items-center rounded-lg border-2 border-border bg-primary font-heading text-sm font-bold shadow-md"
-          aria-current="page"
-        >
-          {{ paged.current }}
-        </button>
-        <button
+          <span class="page-prev" aria-hidden="true">&lt;</span>
+        </ArcadeKey>
+        <ArcadeKey variant="choice" square state="on" aria-current="page">{{ paged.current }}</ArcadeKey>
+        <ArcadeKey
           v-if="paged.current < paged.pages"
-          type="button"
-          class="grid min-h-11 min-w-11 cursor-pointer place-items-center rounded-lg border-2 border-border bg-card font-heading text-sm font-bold shadow-md"
+          variant="choice"
+          square
+          state="off"
           @click="writeQuery(queryText, paged.current + 1)"
         >
           {{ paged.current + 1 }}
-        </button>
-        <button
-          type="button"
-          class="grid min-h-11 min-w-11 cursor-pointer place-items-center rounded-lg border-2 border-border bg-card shadow-md disabled:cursor-default disabled:opacity-40"
+        </ArcadeKey>
+        <ArcadeKey
+          variant="choice"
+          square
           :aria-label="t(locale, 'next')"
           :disabled="paged.current >= paged.pages"
           @click="writeQuery(queryText, paged.current + 1)"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="rtl:rotate-180" aria-hidden="true">
-            <path d="m9 18 6-6-6-6" />
-          </svg>
-        </button>
+          <span class="page-next" aria-hidden="true">&gt;</span>
+        </ArcadeKey>
       </nav>
     </template>
   </section>

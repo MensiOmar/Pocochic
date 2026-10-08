@@ -11,8 +11,10 @@ import {
 } from "@pocochic/contracts";
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import cartEmpty from "@assets/cart-empty.svg";
 import { api, catalogSrc } from "../api";
 import { refreshCart, requestPromoQuote, type PromoErrorKind } from "../cart-sync";
+import ArcadeKey from "../components/ArcadeKey.vue";
 import PriceTag from "../components/PriceTag.vue";
 import { checkoutIssues, isBlockingIssue, joinName, phoneDigits, saveReceipt, summaryMeta, type CheckoutIssue } from "../checkout";
 import { promoErrorMessage, t } from "../i18n";
@@ -272,14 +274,9 @@ async function submit() {
       </div>
       <p v-if="notice" role="status" class="mb-4 font-heading text-sm text-primary">{{ t(locale, "bagUpdated") }}</p>
       <p v-if="!pending && (bagHold || geoHold)" role="alert" class="mb-4 font-heading text-sm text-destructive">{{ t(locale, "error") }}</p>
-      <button
-        v-if="!pending && (bagHold || geoHold)"
-        type="button"
-        class="mb-4 min-h-11 cursor-pointer rounded-lg border-2 border-border bg-card px-4 font-heading text-xs font-bold uppercase"
-        @click="retryHold"
-      >
+      <ArcadeKey v-if="!pending && (bagHold || geoHold)" class="mb-4" @click="retryHold">
         {{ t(locale, "retry") }}
-      </button>
+      </ArcadeKey>
       <form class="rounded-xl border-2 border-border bg-card p-5 shadow-md sm:p-7" @submit.prevent="submit">
         <div class="flex items-center gap-3 border-b-2 border-border pb-4">
           <span class="grid h-10 w-10 place-items-center rounded-lg border-2 border-border bg-accent font-heading font-bold">01</span>
@@ -346,23 +343,13 @@ async function submit() {
           </ul>
         </div>
         <p v-if="orderMessage" role="alert" class="mt-4 font-heading text-sm text-destructive">{{ orderMessage }}</p>
-        <button type="submit" class="mt-6 flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-border bg-primary px-5 py-3 font-heading text-sm font-bold uppercase shadow-md disabled:cursor-default disabled:opacity-40" :disabled="held">
-          {{ t(locale, "submitOrder") }}
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="rtl:rotate-180" aria-hidden="true">
-            <path d="M5 12h14" />
-            <path d="m12 5 7 7-7 7" />
-          </svg>
-        </button>
+        <ArcadeKey block type="submit" class="mt-6" :disabled="held">{{ t(locale, "submitOrder") }}</ArcadeKey>
       </form>
     </section>
     <aside class="h-fit rounded-xl border-2 border-border bg-secondary p-5 shadow-md" :aria-label="t(locale, 'orderSummary')">
       <div class="flex items-center justify-between">
         <h2 class="font-heading text-xl font-bold">{{ t(locale, "orderSummary") }}</h2>
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary" aria-hidden="true">
-          <circle cx="8" cy="21" r="1" />
-          <circle cx="19" cy="21" r="1" />
-          <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
-        </svg>
+        <img class="cart-ico" alt="" :src="cartEmpty" />
       </div>
       <div class="mt-5 space-y-4 border-b-2 border-border pb-5">
         <div v-for="line in cart.lines" :key="line.variantId" class="flex gap-3">
@@ -400,14 +387,7 @@ async function submit() {
         </div>
       </div>
       <p v-if="promoMessage" role="alert" class="mt-4 font-heading text-xs text-destructive">{{ promoMessage }}</p>
-      <button
-        v-if="!pending && promoHold"
-        type="button"
-        class="mt-3 min-h-11 cursor-pointer rounded-lg border-2 border-border bg-card px-4 font-heading text-xs font-bold uppercase"
-        @click="runQuote"
-      >
-        {{ t(locale, "retry") }}
-      </button>
+      <ArcadeKey v-if="!pending && promoHold" class="mt-3" @click="runQuote">{{ t(locale, "retry") }}</ArcadeKey>
     </aside>
   </div>
 </template>

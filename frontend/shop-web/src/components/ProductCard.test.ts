@@ -59,6 +59,6 @@ describe("ProductCard", () => {
       },
     });
     expect(wrapper.get("button").text()).toBe("+");
-    expect(wrapper.get("button").classes()).toContain("cursor-pointer");
+    expect(wrapper.get("button").classes()).toContain("px-icon");
   });
 });
