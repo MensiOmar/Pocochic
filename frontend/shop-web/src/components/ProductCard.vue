@@ -4,6 +4,7 @@ import { computed } from "vue";
 import { catalogSrc } from "../api";
 import { t } from "../i18n";
 import { sizeRange } from "../sizes";
+import ArcadeKey from "./ArcadeKey.vue";
 import PriceTag from "./PriceTag.vue";
 
 const props = defineProps<{ item: StyleListItem; locale: Locale }>();
@@ -25,15 +26,16 @@ const detail = computed(() => (props.item.isSoldOut ? t(props.locale, "soldOut")
         class="block max-h-52 max-w-full rounded-xl object-contain"
         :class="item.isSoldOut ? 'opacity-70 grayscale' : ''"
       />
-      <button
+      <ArcadeKey
         v-if="item.soleVariant"
-        type="button"
-        class="absolute left-4 top-4 z-10 grid min-h-11 min-w-11 cursor-pointer place-items-center rounded-lg border-2 border-border bg-primary font-heading text-xl font-bold"
+        variant="icon"
+        plus
+        class="absolute left-3 top-3 z-10"
         :aria-label="t(locale, 'addToCart')"
         @click="emit('add', item)"
       >
         +
-      </button>
+      </ArcadeKey>
       <span
         v-else-if="item.isSoldOut"
         class="absolute left-4 top-4 z-10 rounded-lg border-2 border-border bg-destructive px-2 py-1 font-heading text-xs font-bold uppercase text-destructive-foreground"
@@ -52,12 +54,9 @@ const detail = computed(() => (props.item.isSoldOut ? t(props.locale, "soldOut")
         <h2 class="min-w-0 font-heading text-lg font-semibold leading-7">{{ item.displayName }}</h2>
         <PriceTag :cents="shownCents" class="h-7" />
       </div>
-      <RouterLink
-        :to="`/${locale}/p/${item.slug}`"
-        class="mt-auto grid min-h-11 w-full place-items-center rounded-lg border-2 border-border bg-primary font-heading text-sm font-bold uppercase"
-      >
+      <ArcadeKey variant="primary" block class="mt-auto" :to="`/${locale}/p/${item.slug}`">
         {{ t(locale, "viewItem") }}
-      </RouterLink>
+      </ArcadeKey>
     </div>
   </article>
 </template>

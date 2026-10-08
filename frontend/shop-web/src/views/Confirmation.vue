@@ -4,6 +4,7 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { api } from "../api";
 import { readReceipt } from "../checkout";
+import ArcadeKey from "../components/ArcadeKey.vue";
 import { t } from "../i18n";
 
 const route = useRoute();
@@ -67,9 +68,7 @@ watch(locale, () => {
           <p class="text-sm">{{ t(locale, "instagramHelp") }}</p>
         </div>
       </div>
-      <RouterLink :to="`/${locale}`" class="mt-6 flex min-h-11 w-full cursor-pointer items-center justify-center rounded-lg border-2 border-border bg-primary px-5 py-3 font-heading text-sm font-bold uppercase">
-        {{ t(locale, "continueShopping") }}
-      </RouterLink>
+      <ArcadeKey block class="mt-6" :to="`/${locale}`">{{ t(locale, "continueShopping") }}</ArcadeKey>
     </div>
   </section>
 </template>

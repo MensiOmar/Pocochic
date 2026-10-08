@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { styleDetailSchema, type Locale, type StyleDetail, type Variant } from "@pocochic/contracts";
+import { styleDetailSchema, type Locale, type StyleDetail } from "@pocochic/contracts";
 import { computed, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { api, catalogSrc } from "../api";
+import ArcadeKey from "../components/ArcadeKey.vue";
 import PriceTag from "../components/PriceTag.vue";
 import { t } from "../i18n";
 import { formatTnd } from "../money";
@@ -81,12 +82,6 @@ function addSelected() {
   capped.value = !added;
 }
 
-function optionClass(variant: Variant): string {
-  if (variant.availableQty <= 0) return "cursor-default bg-card text-muted-foreground opacity-60";
-  if (variant.id === selectedId.value) return "cursor-pointer bg-primary";
-  return "cursor-pointer bg-card";
-}
-
 const ordered = computed(() => orderedVariants(style.value?.variants ?? []));
 const optionsVisible = computed(() => showOptionRow(style.value?.variants ?? []));
 const kind = computed(() => optionKind(style.value?.variants ?? []));
@@ -107,24 +102,14 @@ watch(() => route.params.slug, load);
   <section v-if="state === 'loading'" class="mx-auto w-full max-w-7xl px-5 py-8 font-heading">{{ t(locale, "loading") }}</section>
   <section v-else-if="state === 'error'" class="mx-auto w-full max-w-7xl px-5 py-8">
     <p class="font-heading">{{ t(locale, "error") }}</p>
-    <button type="button" class="mt-4 min-h-11 cursor-pointer rounded-lg border-2 border-border bg-primary px-5 font-heading text-sm font-bold uppercase" @click="load">
-      {{ t(locale, "retry") }}
-    </button>
+    <ArcadeKey class="mt-4" @click="load">{{ t(locale, "retry") }}</ArcadeKey>
   </section>
   <section v-else-if="state === 'missing' || !style" class="mx-auto w-full max-w-7xl px-5 py-8">
     <p class="font-heading">{{ t(locale, "notFound") }}</p>
-    <RouterLink :to="`/${locale}/shop`" class="mt-6 inline-flex min-h-11 items-center font-heading text-sm font-bold uppercase">
-      {{ t(locale, "backToShop") }}
-    </RouterLink>
+    <ArcadeKey variant="back" class="mt-6" :to="`/${locale}/shop`">{{ t(locale, "backToShop") }}</ArcadeKey>
   </section>
   <div v-else class="mx-auto w-full max-w-7xl px-5 py-8">
-    <RouterLink :to="`/${locale}/shop`" class="mb-6 inline-flex min-h-11 items-center gap-2 font-heading text-sm font-bold uppercase">
-      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="rtl:rotate-180" aria-hidden="true">
-        <path d="m12 19-7-7 7-7" />
-        <path d="M19 12H5" />
-      </svg>
-      {{ t(locale, "backToShop") }}
-    </RouterLink>
+    <ArcadeKey variant="back" class="mb-6" :to="`/${locale}/shop`">{{ t(locale, "backToShop") }}</ArcadeKey>
     <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
       <section>
         <div class="grid h-[480px] place-items-center rounded-xl border-2 border-border bg-card p-3 shadow-md">
@@ -157,28 +142,21 @@ watch(() => route.params.slug, load);
         <div v-if="optionsVisible" class="mt-6 border-y-2 border-border py-5">
           <p class="font-heading text-xs font-bold uppercase">{{ t(locale, kind === "size" ? "pickSize" : "pickOne") }}</p>
           <div class="mt-3 flex flex-wrap gap-2" role="group" :aria-label="t(locale, kind === 'size' ? 'pickSize' : 'pickOne')">
-            <button
+            <ArcadeKey
               v-for="variant in ordered"
               :key="variant.id"
-              type="button"
-              class="grid min-h-11 min-w-11 place-items-center rounded-lg border-2 border-border px-3 font-heading font-bold"
-              :class="optionClass(variant)"
+              variant="choice"
+              :state="variant.id === selectedId ? 'on' : 'off'"
               :disabled="variant.availableQty <= 0"
-              :aria-pressed="variant.id === selectedId"
               @click="select(variant.id)"
             >
               {{ optionLabel(variant) }}
-            </button>
+            </ArcadeKey>
           </div>
         </div>
-        <button
-          v-if="selected"
-          type="button"
-          class="mt-6 flex min-h-11 w-full cursor-pointer items-center justify-center rounded-lg border-2 border-border bg-primary px-6 py-3 text-center font-heading text-sm font-bold uppercase shadow-md"
-          @click="addSelected"
-        >
+        <ArcadeKey v-if="selected" block class="mt-6" @click="addSelected">
           {{ t(locale, "addToCart") }} · <span dir="ltr">{{ formatTnd(selected.priceCents) }}</span>
-        </button>
+        </ArcadeKey>
         <p v-if="selected && capped" class="mt-3 font-heading text-sm text-destructive" role="status">{{ t(locale, "stockCap") }}</p>
         <div
           v-else-if="!selected"

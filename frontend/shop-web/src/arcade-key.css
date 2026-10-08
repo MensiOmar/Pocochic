@@ -1,0 +1,336 @@
+/* Arcade slab keys. Shared by shop-web and design/v1.0.0 screens.
+   The outer .px is the hit target and does not move. Only .face moves. */
+
+.px {
+  position: relative;
+  display: inline-flex;
+  box-sizing: border-box;
+  padding: 2px 8px 8px 2px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  vertical-align: bottom;
+  text-decoration: none;
+  font: inherit;
+  line-height: 1;
+  max-width: 100%;
+}
+
+/* Tailwind's absolute utility is layered, so it loses to the rule above.
+   Card quick-add keys use it to sit in the top-left of the image well. */
+.px.absolute {
+  position: absolute;
+}
+
+.px:focus {
+  outline: none;
+}
+
+.px-block {
+  display: flex;
+  width: 100%;
+}
+
+.face {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 3px solid #351040;
+  border-radius: 6px;
+  background: #f58684;
+  color: #0f1015;
+  font-family: Silkscreen, ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow:
+    inset 0 3px 0 rgba(255, 253, 248, 0.55),
+    4px 4px 0 #351040;
+  transition:
+    transform 70ms steps(2, end),
+    box-shadow 70ms steps(2, end),
+    background-color 70ms steps(2, end),
+    color 70ms steps(2, end);
+}
+
+.face > * {
+  position: relative;
+  z-index: 1;
+}
+
+.px-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+}
+
+.cursor {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  width: 0;
+  min-width: 0;
+  height: 14px;
+  margin-inline-end: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition:
+    width 90ms steps(3, end),
+    margin-inline-end 90ms steps(3, end),
+    opacity 90ms steps(2, end),
+    transform 90ms steps(3, end);
+}
+
+[dir="rtl"] .cursor {
+  transform: translateX(8px);
+}
+
+.arrow {
+  display: block;
+  flex: none;
+  width: 8px;
+  height: 14px;
+  shape-rendering: crispEdges;
+}
+
+[dir="rtl"] .cursor .arrow {
+  transform: scaleX(-1);
+}
+
+.px:hover .cursor,
+.px:focus-visible .cursor {
+  width: 8px;
+  margin-inline-end: 8px;
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.px:disabled .cursor,
+.px:disabled:hover .cursor {
+  width: 0;
+  margin-inline-end: 0;
+  opacity: 0;
+  transform: translateX(-8px);
+}
+
+[dir="rtl"] .px:disabled .cursor,
+[dir="rtl"] .px:disabled:hover .cursor {
+  transform: translateX(8px);
+}
+
+.px:hover .face {
+  transform: translate(-2px, -2px);
+  background: #ffa3a1;
+  box-shadow:
+    inset 0 3px 0 rgba(255, 253, 248, 0.75),
+    6px 6px 0 #351040;
+}
+
+.px:active .face {
+  transform: translate(4px, 4px);
+  background: #e0706e;
+  box-shadow: inset 0 3px 0 rgba(53, 16, 64, 0.28);
+}
+
+.px:focus-visible .face {
+  outline: 3px solid #c74375;
+  outline-offset: 3px;
+}
+
+.px-hero .face {
+  min-height: 52px;
+  padding: 0 20px;
+  font-size: 13px;
+}
+
+.px-choice .face {
+  min-width: 44px;
+  padding: 0 12px;
+  background: #fffff9;
+  text-transform: none;
+}
+
+.px-choice.is-on .face {
+  background: #f58684;
+}
+
+.px-choice.is-on:hover .face {
+  background: #ffa3a1;
+}
+
+.px-chip .face {
+  padding: 0 14px;
+  text-transform: uppercase;
+}
+
+.px-icon .face,
+.px-square .face {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+}
+
+.page-prev,
+.page-next {
+  display: block;
+}
+
+[dir="rtl"] .page-prev,
+[dir="rtl"] .page-next {
+  transform: scaleX(-1);
+}
+
+.px.px-back .face {
+  padding: 0 8px;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+.px.px-back:hover .face {
+  border-color: #351040;
+  background: #fffff9;
+  box-shadow:
+    inset 0 3px 0 rgba(255, 253, 248, 0.8),
+    4px 4px 0 #351040;
+}
+
+.px.px-back:active .face {
+  transform: translate(3px, 3px);
+  background: #f4c5cc;
+  box-shadow: inset 0 3px 0 rgba(53, 16, 64, 0.22);
+}
+
+.px.px-link .face {
+  min-height: 44px;
+  padding: 0 2px;
+  border-color: transparent;
+  background: transparent;
+  color: #be5455;
+  box-shadow: none;
+}
+
+.px.px-link:hover .face {
+  transform: translate(-1px, -1px);
+  background: transparent;
+  color: #0f1015;
+  box-shadow: inset 0 -3px 0 #be5455;
+}
+
+.px.px-link:active .face {
+  transform: translate(0, 2px);
+  background: transparent;
+  box-shadow: inset 0 -1px 0 #be5455;
+}
+
+.px.px-link.danger .face {
+  color: #aa1945;
+}
+
+.px.px-link.danger:hover .face,
+.px.px-link.danger:active .face {
+  color: #aa1945;
+  box-shadow: inset 0 -3px 0 #aa1945;
+}
+
+.px.px-link.danger:active .face {
+  box-shadow: inset 0 -1px 0 #aa1945;
+}
+
+.cart-ico {
+  display: block;
+  width: 22px;
+  height: 22px;
+  image-rendering: pixelated;
+}
+
+.plus {
+  display: block;
+  transform-origin: center;
+}
+
+.px:hover .plus {
+  animation: plus-spin 240ms steps(4, end);
+}
+
+.px:disabled .plus,
+.px:disabled:hover .plus {
+  animation: none;
+}
+
+@keyframes plus-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(90deg); }
+}
+
+.px-badge {
+  position: absolute;
+  top: -2px;
+  inset-inline-end: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 3px;
+  border: 2px solid #fffdf8;
+  border-radius: 0;
+  background: #0f1015;
+  color: #fffdf8;
+  font-family: Silkscreen, ui-monospace, monospace;
+  font-size: 9px;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: none;
+  pointer-events: none;
+}
+
+.px:disabled {
+  cursor: not-allowed;
+}
+
+.px:disabled .face,
+.px:disabled:hover .face,
+.px:disabled:active .face,
+.px.px-link:disabled .face,
+.px.px-link:disabled:hover .face,
+.px.px-link:disabled:active .face,
+.px.px-back:disabled .face,
+.px.px-back:disabled:hover .face,
+.px.px-back:disabled:active .face,
+.px.px-choice:disabled .face,
+.px.px-choice:disabled:hover .face,
+.px.px-choice:disabled:active .face,
+.px.px-choice.is-on:disabled .face,
+.px.px-choice.is-on:disabled:hover .face,
+.px.px-choice.is-on:disabled:active .face {
+  transform: none;
+  border-color: #c4b3be;
+  background: #f1e6dd;
+  color: #7e736c;
+  box-shadow:
+    inset 0 3px 0 rgba(255, 253, 248, 0.4),
+    4px 4px 0 #c4b3be;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .face,
+  .cursor,
+  .plus {
+    transition: none;
+    animation: none;
+  }
+}

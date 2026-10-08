@@ -4,6 +4,7 @@ import { computed, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
 import { catalogSrc } from "../api";
 import { useStyles } from "../catalog";
+import ArcadeKey from "../components/ArcadeKey.vue";
 import PriceTag from "../components/PriceTag.vue";
 import ProductCard from "../components/ProductCard.vue";
 import { t } from "../i18n";
@@ -61,9 +62,7 @@ const heroSrc = computed(() => catalogSrc(hero.value?.imagePath ?? null));
   <section v-if="state === 'loading'" class="mx-auto max-w-7xl px-5 py-16 font-heading">{{ t(locale, "loading") }}</section>
   <section v-else-if="state === 'error'" class="mx-auto max-w-7xl px-5 py-16">
     <p class="font-heading">{{ t(locale, "error") }}</p>
-    <button type="button" class="mt-4 min-h-11 rounded-lg border-2 border-border bg-primary px-5 font-heading text-sm font-bold uppercase" @click="retry">
-      {{ t(locale, "retry") }}
-    </button>
+    <ArcadeKey class="mt-4" @click="retry">{{ t(locale, "retry") }}</ArcadeKey>
   </section>
   <template v-else>
     <section class="border-b-2 border-border bg-muted/80">
@@ -72,13 +71,7 @@ const heroSrc = computed(() => catalogSrc(hero.value?.imagePath ?? null));
           <p class="mb-4 inline-flex rounded-lg border-2 border-border bg-accent px-3 py-1 font-heading text-xs font-bold uppercase">{{ t(locale, "heroKicker") }}</p>
           <h1 class="max-w-xl text-balance font-heading text-4xl font-bold leading-tight md:text-6xl">{{ t(locale, "heroTitle") }}</h1>
           <p class="mt-5 max-w-lg text-pretty text-lg text-muted-foreground">{{ t(locale, "heroBody") }}</p>
-          <RouterLink :to="`/${locale}/shop`" class="mt-8 inline-flex min-h-11 items-center rounded-lg border-2 border-border bg-primary px-7 font-heading text-sm font-bold uppercase shadow-md">
-            {{ t(locale, "shopNow") }}
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ms-1" aria-hidden="true">
-              <path d="M5 12h14" />
-              <path d="m12 5 7 7-7 7" />
-            </svg>
-          </RouterLink>
+          <ArcadeKey hero class="mt-8" :to="`/${locale}/shop`">{{ t(locale, "shopNow") }}</ArcadeKey>
         </div>
         <div v-if="hero" class="relative mx-auto w-full max-w-lg">
           <div class="absolute inset-4 rounded-xl border-2 border-border bg-accent"></div>
@@ -107,7 +100,7 @@ const heroSrc = computed(() => catalogSrc(hero.value?.imagePath ?? null));
           <p class="font-heading text-xs font-bold uppercase text-primary">{{ t(locale, "featuredKicker") }}</p>
           <h2 class="mt-2 text-balance font-heading text-2xl font-bold">{{ t(locale, "featuredTitle") }}</h2>
         </div>
-        <RouterLink :to="`/${locale}/shop`" class="min-h-11 font-heading text-sm font-bold uppercase text-primary">{{ t(locale, "viewAll") }}</RouterLink>
+        <ArcadeKey variant="text" :to="`/${locale}/shop`">{{ t(locale, "viewAll") }}</ArcadeKey>
       </div>
       <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         <ProductCard v-for="item in pickups" :key="item.slug" :item="item" :locale="locale" @add="add" />

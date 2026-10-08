@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { LOCALES, type Locale } from "@pocochic/contracts";
+import cartEmpty from "@assets/cart-empty.svg";
+import cartFilled from "@assets/cart-filled.svg";
 import { computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { t } from "../i18n";
 import { useCartStore } from "../stores/cart";
 import { brandAssets, themeMode } from "../theme";
+import ArcadeKey from "./ArcadeKey.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -31,24 +34,12 @@ function switchLocale(next: Locale) {
   <div class="flex min-h-screen w-full flex-col bg-background">
     <header class="relative z-20 border-b-2 border-border bg-card">
       <div v-if="route.name === 'cart'" class="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-5 py-4">
-        <RouterLink :to="`/${locale}`" class="flex min-h-11 min-w-0 cursor-pointer items-center gap-2 font-heading text-xs font-bold uppercase sm:text-sm">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 rtl:rotate-180" aria-hidden="true">
-            <path d="m12 19-7-7 7-7" />
-            <path d="M19 12H5" />
-          </svg>
-          {{ t(locale, "keepBrowsing") }}
-        </RouterLink>
+        <ArcadeKey variant="back" class="min-w-0" :to="`/${locale}`">{{ t(locale, "keepBrowsing") }}</ArcadeKey>
         <img :src="brand.logo" alt="Pocochic" class="h-10 w-auto shrink-0 object-contain" />
         <span class="shrink-0 font-heading text-xs font-bold uppercase sm:text-sm">{{ t(locale, "yourCart") }} ({{ cart.count }})</span>
       </div>
       <div v-else-if="route.name === 'checkout'" class="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-5 py-4">
-        <RouterLink :to="`/${locale}/cart`" class="flex min-h-11 min-w-0 cursor-pointer items-center gap-2 font-heading text-xs font-bold uppercase sm:text-sm">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 rtl:rotate-180" aria-hidden="true">
-            <path d="m12 19-7-7 7-7" />
-            <path d="M19 12H5" />
-          </svg>
-          {{ t(locale, "backToBag") }}
-        </RouterLink>
+        <ArcadeKey variant="back" class="min-w-0" :to="`/${locale}/cart`">{{ t(locale, "backToBag") }}</ArcadeKey>
         <img :src="brand.logo" alt="Pocochic" class="h-10 w-auto shrink-0 object-contain" />
         <span class="shrink-0 font-heading text-xs font-bold uppercase sm:text-sm">{{ t(locale, "checkoutBar") }}</span>
       </div>
@@ -80,23 +71,9 @@ function switchLocale(next: Locale) {
               {{ code }}
             </button>
           </div>
-          <RouterLink
-            :to="`/${locale}/cart`"
-            class="relative grid min-h-11 min-w-11 place-items-center rounded-lg border-2 border-border bg-primary"
-            :aria-label="t(locale, 'cart')"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <circle cx="8" cy="21" r="1" />
-              <circle cx="19" cy="21" r="1" />
-              <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
-            </svg>
-            <span
-              v-if="cart.count > 0"
-              class="absolute -end-2 -top-2 grid h-5 min-w-5 place-items-center rounded-full bg-foreground px-1 text-xs font-bold text-background"
-            >
-              {{ cart.count }}
-            </span>
-          </RouterLink>
+          <ArcadeKey variant="icon" :to="`/${locale}/cart`" :aria-label="t(locale, 'cart')" :badge="cart.count">
+            <img class="cart-ico" alt="" :src="cart.count > 0 ? cartFilled : cartEmpty" />
+          </ArcadeKey>
         </div>
       </div>
       <nav v-if="route.name !== 'cart' && route.name !== 'checkout'" class="mx-auto flex w-full max-w-7xl items-center justify-center gap-7 px-5 pb-4 font-heading text-sm font-bold uppercase lg:hidden">
