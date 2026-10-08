@@ -74,3 +74,31 @@ body {
 .text-tertiary { color: var(--tertiary-text, var(--tertiary)); }
 .text-accent { color: var(--accent-text, var(--accent)); }
 .text-destructive { color: var(--destructive-text, var(--destructive)); }
+
+[data-theme="dark"] {
+  --background: #000000;
+  --foreground: #fffff9;
+  --primary: #f4c5cc;
+  --primary-foreground: #351040;
+  --secondary: #351040;
+  --secondary-foreground: #fffff9;
+  --tertiary: #c74375;
+  --tertiary-foreground: #fffff9;
+  --muted: #351040;
+  --muted-foreground: #f4c5cc;
+  --accent: #f4c5cc;
+  --accent-foreground: #351040;
+  --card: #351040;
+  --card-foreground: #fffff9;
+  --destructive: #aa1945;
+  --destructive-foreground: #fffff9;
+  --border: #c74375;
+  --input: #351040;
+  --ring: #f4c5cc;
+  --primary-text: #f4c5cc;
+  --secondary-text: #f4c5cc;
+  --tertiary-text: #f4c5cc;
+  --accent-text: #f4c5cc;
+  --destructive-text: #aa1945;
+  color-scheme: dark;
+}

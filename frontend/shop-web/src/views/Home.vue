@@ -65,7 +65,7 @@ const heroSrc = computed(() => catalogSrc(hero.value?.imagePath ?? null));
     <ArcadeKey class="mt-4" @click="retry">{{ t(locale, "retry") }}</ArcadeKey>
   </section>
   <template v-else>
-    <section class="border-b-2 border-border bg-muted/80">
+    <section>
       <div class="mx-auto grid max-w-7xl grid-cols-1 items-center gap-8 px-5 py-12 lg:grid-cols-2 lg:py-16">
         <div>
           <p class="mb-4 inline-flex rounded-lg border-2 border-border bg-accent px-3 py-1 font-heading text-xs font-bold uppercase">{{ t(locale, "heroKicker") }}</p>
