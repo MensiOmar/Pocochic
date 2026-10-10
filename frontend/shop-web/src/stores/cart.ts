@@ -13,6 +13,15 @@ const MAX_QTY = 99;
 
 type SavedCart = { lines: StoredCartLine[]; promoCode: string };
 
+export type AddedNotice = {
+  id: number;
+  displayName: string;
+  size: string;
+  reference: string;
+  unitPriceCents: number;
+  imagePath: string | null;
+};
+
 function read(): SavedCart {
   try {
     const raw = JSON.parse(globalThis.localStorage?.getItem(CART_STORAGE_KEY) ?? "[]") as unknown;
@@ -37,6 +46,20 @@ export const useCartStore = defineStore("cart", () => {
   const lines = ref<StoredCartLine[]>(saved.lines);
   const promoCode = ref(saved.promoCode);
   const quote = ref<PromoQuote | null>(null);
+  const notice = ref<AddedNotice | null>(null);
+  let noticeSeq = 0;
+
+  function publishAdded(line: StoredCartLine) {
+    noticeSeq += 1;
+    notice.value = {
+      id: noticeSeq,
+      displayName: line.displayName,
+      size: line.size,
+      reference: line.reference,
+      unitPriceCents: line.unitPriceCents,
+      imagePath: line.imagePath,
+    };
+  }
 
   function persist() {
     const body: SavedCart = { lines: lines.value, promoCode: promoCode.value };
@@ -75,6 +98,7 @@ export const useCartStore = defineStore("cart", () => {
     }
     dropQuote();
     persist();
+    publishAdded(line);
     return true;
   }
 
@@ -151,6 +175,7 @@ export const useCartStore = defineStore("cart", () => {
     lines,
     promoCode,
     quote,
+    notice,
     acceptedCode,
     add,
     setQty,
