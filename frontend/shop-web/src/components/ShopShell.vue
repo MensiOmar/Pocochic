@@ -2,7 +2,6 @@
 import { LOCALES, type Locale } from "@pocochic/contracts";
 import cartEmpty from "@assets/cart-empty.svg";
 import cartFilled from "@assets/cart-filled.svg";
-import logoDark from "@assets/logodark.png";
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { t } from "../i18n";
@@ -85,11 +84,10 @@ onBeforeUnmount(() => {
       </div>
     </header>
     <header v-else class="relative z-20 pt-6">
-      <div class="player-bar" :data-lang="locale" :style="{ '--logo-dark': `url(${logoDark})` }">
+      <div class="player-bar" :data-lang="locale">
         <div class="player-row">
           <RouterLink :to="`/${locale}`" class="player-logo" aria-label="Pocochic">
-            <img v-if="themeMode !== 'dark'" :src="brand.logo" alt="" />
-            <span v-else class="player-logo-dark"><img :src="brand.logo" alt="" /></span>
+            <img :src="brand.logo" alt="" />
           </RouterLink>
           <nav class="player-links player-links-desk" :aria-label="t(locale, 'shopNav')">
             <RouterLink
