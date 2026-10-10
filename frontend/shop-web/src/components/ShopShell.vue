@@ -2,6 +2,10 @@
 import { LOCALES, type Locale } from "@pocochic/contracts";
 import cartEmpty from "@assets/cart-empty.svg";
 import cartFilled from "@assets/cart-filled.svg";
+import cloudsFarDark from "@assets/clouds-far-dark.png";
+import cloudsFarLight from "@assets/clouds-far-light.png";
+import cloudsNearDark from "@assets/clouds-near-dark.png";
+import cloudsNearLight from "@assets/clouds-near-light.png";
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { t } from "../i18n";
@@ -70,6 +74,30 @@ onBeforeUnmount(() => {
       class="pointer-events-none absolute inset-0 h-full w-full object-cover"
       :class="themeMode === 'dark' ? 'opacity-100' : 'opacity-50'"
     />
+    <div class="sky sky-far for-light" aria-hidden="true">
+      <div class="sky-track">
+        <img :src="cloudsFarLight" alt="" />
+        <img :src="cloudsFarLight" alt="" />
+      </div>
+    </div>
+    <div class="sky sky-far for-dark" aria-hidden="true">
+      <div class="sky-track">
+        <img :src="cloudsFarDark" alt="" />
+        <img :src="cloudsFarDark" alt="" />
+      </div>
+    </div>
+    <div class="sky sky-near for-light" aria-hidden="true">
+      <div class="sky-track">
+        <img :src="cloudsNearLight" alt="" />
+        <img :src="cloudsNearLight" alt="" />
+      </div>
+    </div>
+    <div class="sky sky-near for-dark" aria-hidden="true">
+      <div class="sky-track">
+        <img :src="cloudsNearDark" alt="" />
+        <img :src="cloudsNearDark" alt="" />
+      </div>
+    </div>
     <header v-if="route.name === 'cart'" class="relative z-20 border-b-2 border-border bg-card">
       <div class="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-5 py-4">
         <ArcadeKey variant="back" class="min-w-0" :to="`/${locale}`">{{ t(locale, "keepBrowsing") }}</ArcadeKey>
@@ -177,3 +205,45 @@ onBeforeUnmount(() => {
     <AddedToast />
   </div>
 </template>
+
+<style>
+/* Direction stays physical so Arabic rtl does not reverse the loop. */
+.sky {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+  direction: ltr;
+}
+.sky-track {
+  display: flex;
+  width: max-content;
+  height: 100%;
+  animation: cloud-drift linear infinite;
+  will-change: transform;
+}
+.sky-track img {
+  height: 100%;
+  width: auto;
+  max-width: none; /* Tailwind preflight would otherwise cap each strip */
+  display: block;
+  image-rendering: pixelated;
+}
+.sky-far .sky-track { animation-duration: 150s; animation-delay: -55s; }
+.sky-near .sky-track { animation-duration: 86s; }
+.sky.for-dark { display: none; }
+[data-theme="dark"] .sky.for-light { display: none; }
+[data-theme="dark"] .sky.for-dark { display: block; }
+.sky-near { opacity: 0.40; }
+.sky-far { opacity: 0.18; }
+[data-theme="dark"] .sky-near { opacity: 0.50; }
+[data-theme="dark"] .sky-far { opacity: 0.22; }
+@keyframes cloud-drift {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sky-track { animation: none; }
+}
+</style>
