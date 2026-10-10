@@ -44,24 +44,6 @@
   display: block;
 }
 
-.player-logo-dark {
-  position: relative;
-  display: inline-flex;
-}
-
-.player-logo-dark::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: #f4c5cc;
-  pointer-events: none;
-  -webkit-mask-image: var(--logo-dark);
-  mask-image: var(--logo-dark);
-  mask-repeat: no-repeat;
-  mask-size: 100% 100%;
-  clip-path: inset(73% 0 0 0);
-}
-
 .player-links {
   display: flex;
   align-items: center;

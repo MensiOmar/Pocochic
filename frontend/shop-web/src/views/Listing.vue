@@ -5,6 +5,7 @@ import { useRoute, useRouter } from "vue-router";
 import { useStyles } from "../catalog";
 import ArcadeKey from "../components/ArcadeKey.vue";
 import ProductCard from "../components/ProductCard.vue";
+import ShopLoader from "../components/ShopLoader.vue";
 import { t } from "../i18n";
 import { pageWindow } from "../paging";
 import { useCartStore } from "../stores/cart";
@@ -71,7 +72,8 @@ onMounted(load);
 </script>
 
 <template>
-  <section class="mx-auto w-full max-w-7xl px-5 py-12">
+  <ShopLoader v-if="state === 'loading'" />
+  <section v-else class="mx-auto w-full max-w-7xl px-5 py-12">
     <p class="font-heading text-xs font-bold uppercase text-primary">{{ t(locale, "arcadeKicker") }}</p>
     <h1 class="mt-2 text-balance font-heading text-4xl font-bold">{{ t(locale, "allProducts") }}</h1>
     <p class="mt-2 text-pretty text-muted-foreground">{{ t(locale, "allProductsBody") }}</p>
@@ -95,8 +97,7 @@ onMounted(load);
         />
       </label>
     </div>
-    <p v-if="state === 'loading'" class="mt-10 font-heading">{{ t(locale, "loading") }}</p>
-    <div v-else-if="state === 'error'" class="mt-10">
+    <div v-if="state === 'error'" class="mt-10">
       <p class="font-heading">{{ t(locale, "error") }}</p>
       <ArcadeKey class="mt-4" @click="load">{{ t(locale, "retry") }}</ArcadeKey>
     </div>

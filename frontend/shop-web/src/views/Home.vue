@@ -7,6 +7,7 @@ import { useStyles } from "../catalog";
 import ArcadeKey from "../components/ArcadeKey.vue";
 import PriceTag from "../components/PriceTag.vue";
 import ProductCard from "../components/ProductCard.vue";
+import ShopLoader from "../components/ShopLoader.vue";
 import { t } from "../i18n";
 import { sizeRange } from "../sizes";
 import { useCartStore } from "../stores/cart";
@@ -59,7 +60,7 @@ const heroSrc = computed(() => catalogSrc(hero.value?.imagePath ?? null));
 </script>
 
 <template>
-  <section v-if="state === 'loading'" class="mx-auto max-w-7xl px-5 py-16 font-heading">{{ t(locale, "loading") }}</section>
+  <ShopLoader v-if="state === 'loading'" />
   <section v-else-if="state === 'error'" class="mx-auto max-w-7xl px-5 py-16">
     <p class="font-heading">{{ t(locale, "error") }}</p>
     <ArcadeKey class="mt-4" @click="retry">{{ t(locale, "retry") }}</ArcadeKey>

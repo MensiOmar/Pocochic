@@ -5,6 +5,7 @@ import { useRoute } from "vue-router";
 import { api, catalogSrc } from "../api";
 import ArcadeKey from "../components/ArcadeKey.vue";
 import PriceTag from "../components/PriceTag.vue";
+import ShopLoader from "../components/ShopLoader.vue";
 import { t } from "../i18n";
 import { formatTnd } from "../money";
 import { defaultVariantId, optionKind, optionLabel, orderedVariants, showOptionRow } from "../options";
@@ -99,7 +100,7 @@ watch(() => route.params.slug, load);
 </script>
 
 <template>
-  <section v-if="state === 'loading'" class="mx-auto w-full max-w-7xl px-5 py-8 font-heading">{{ t(locale, "loading") }}</section>
+  <ShopLoader v-if="state === 'loading'" />
   <section v-else-if="state === 'error'" class="mx-auto w-full max-w-7xl px-5 py-8">
     <p class="font-heading">{{ t(locale, "error") }}</p>
     <ArcadeKey class="mt-4" @click="load">{{ t(locale, "retry") }}</ArcadeKey>
