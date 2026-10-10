@@ -8,6 +8,7 @@ import { t } from "../i18n";
 import "../player-nav.css";
 import { useCartStore } from "../stores/cart";
 import { brandAssets, themeMode, toggleTheme } from "../theme";
+import AddedToast from "./AddedToast.vue";
 import ArcadeKey from "./ArcadeKey.vue";
 import FlagMark from "./FlagMark.vue";
 import PlayerSprite from "./PlayerSprite.vue";
@@ -173,5 +174,6 @@ onBeforeUnmount(() => {
         <slot />
       </div>
     </main>
+    <AddedToast />
   </div>
 </template>

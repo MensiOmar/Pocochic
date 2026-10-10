@@ -35,9 +35,14 @@ describe("cart", () => {
   it("caps quantity at available stock and survives a reload", () => {
     const cart = useCartStore();
     expect(cart.add(line)).toBe(true);
+    const firstNotice = cart.notice?.id;
     expect(cart.add(line)).toBe(true);
+    expect(cart.notice?.id).not.toBe(firstNotice);
+    const shown = cart.notice?.id;
     expect(cart.add(line)).toBe(false);
     expect(cart.lines[0].quantity).toBe(2);
+    expect(cart.notice).toMatchObject({ displayName: "Tee", size: "S", unitPriceCents: 4500, imagePath: null });
+    expect(cart.notice?.id).toBe(shown);
     expect(cart.add({ ...line, availableQty: 5 })).toBe(false);
     expect(cart.lines[0].availableQty).toBe(2);
     expect(cart.itemsCents).toBe(9000);
@@ -45,6 +50,7 @@ describe("cart", () => {
     expect(cart.totalCents).toBe(9800);
     setActivePinia(createPinia());
     const reloaded = useCartStore();
+    expect(reloaded.notice).toBeNull();
     const saved = JSON.parse(localStorage.getItem(CART_STORAGE_KEY) ?? "{}") as { lines: unknown[]; promoCode: string };
     expect(saved.lines).toHaveLength(1);
     expect(saved.promoCode).toBe("");
