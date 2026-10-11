@@ -128,7 +128,9 @@ describe("Detail", () => {
 
   it("shows a sold-out style at the lowest price with no add button", async () => {
     const wrapper = await open("sold-tee", sold);
-    expect(wrapper.get("img").classes()).toContain("grayscale");
+    const photo = wrapper.get("img");
+    expect(photo.classes()).not.toContain("grayscale");
+    expect(photo.classes()).not.toContain("opacity-70");
     const soldSize = wrapper.findAll("button").find((button) => button.text() === "S");
     expect(soldSize?.attributes("disabled")).toBeDefined();
     expect(soldSize?.classes()).toContain("px-choice");

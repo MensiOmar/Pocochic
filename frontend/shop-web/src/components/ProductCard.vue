@@ -24,7 +24,6 @@ const detail = computed(() => (props.item.isSoldOut ? t(props.locale, "soldOut")
         :src="src"
         :alt="item.displayName"
         class="block max-h-52 max-w-full rounded-xl object-contain"
-        :class="item.isSoldOut ? 'opacity-70 grayscale' : ''"
       />
       <ArcadeKey
         v-if="item.soleVariant"
