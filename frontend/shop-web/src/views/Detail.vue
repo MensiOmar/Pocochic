@@ -249,7 +249,6 @@ watch(() => route.params.slug, load);
               :alt="style.displayName"
               draggable="false"
               class="absolute left-0 top-0 max-w-none select-none"
-              :class="style.isSoldOut ? 'opacity-70 grayscale' : ''"
               :style="frameStyle"
               @load="measure"
             />

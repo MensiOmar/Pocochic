@@ -43,6 +43,9 @@ describe("ProductCard", () => {
     expect(sold.text()).toContain("Out of stock");
     expect(sold.text()).toContain("Unavailable");
     expect(sold.get("a").attributes("href")).toBe("/en/p/tee");
+    const photo = sold.get("img");
+    expect(photo.classes()).not.toContain("grayscale");
+    expect(photo.classes()).not.toContain("opacity-70");
   });
 
   it("shows + only for a single in-stock variant", () => {
