@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { styleDetailSchema, type Locale, type StyleDetail } from "@pocochic/contracts";
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { api, catalogSrc } from "../api";
 import ArcadeKey from "../components/ArcadeKey.vue";
@@ -9,6 +9,7 @@ import ShopLoader from "../components/ShopLoader.vue";
 import { t } from "../i18n";
 import { formatTnd } from "../money";
 import { defaultVariantId, optionKind, optionLabel, orderedVariants, showOptionRow } from "../options";
+import { PHOTO_ZOOM, containPhoto, type PhotoFrame } from "../photo-frame";
 import { useCartStore } from "../stores/cart";
 
 const route = useRoute();
@@ -18,12 +19,32 @@ const style = ref<StyleDetail | null>(null);
 const selectedId = ref<string | null>(null);
 const capped = ref(false);
 const state = ref<"loading" | "ready" | "error" | "missing">("loading");
+const well = ref<HTMLElement | null>(null);
+const photoEl = ref<HTMLImageElement | null>(null);
+const fit = ref<PhotoFrame | null>(null);
 
 let request = 0;
+let hot = false;
+let frameObserver: ResizeObserver | null = null;
+let motionQuery: MediaQueryList | null = null;
+
+function motionReduced() {
+  return window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
+}
+
+function resetFrame() {
+  hot = false;
+  fit.value = null;
+  const img = photoEl.value;
+  if (!img) return;
+  img.style.transition = "none";
+  img.style.transform = "scale(1)";
+}
 
 async function load() {
   const slug = String(route.params.slug ?? "");
   const current = ++request;
+  resetFrame();
   state.value = "loading";
   style.value = null;
   selectedId.value = null;
@@ -95,7 +116,104 @@ const showCode = computed(() => {
 });
 const photo = computed(() => catalogSrc(style.value?.imagePath ?? null));
 
-onMounted(load);
+const frameStyle = computed(() => {
+  const box = fit.value;
+  if (!box) return { visibility: "hidden" };
+  return {
+    width: `${box.w}px`,
+    height: `${box.h}px`,
+    left: `${box.x}px`,
+    top: `${box.y}px`,
+    visibility: "visible",
+  };
+});
+
+function measure() {
+  const img = photoEl.value;
+  const box = well.value;
+  if (!img || !box) {
+    fit.value = null;
+    return;
+  }
+  const next = containPhoto(img.naturalWidth, img.naturalHeight, box.clientWidth, box.clientHeight);
+  const prev = fit.value;
+  if (prev && next && prev.x === next.x && prev.y === next.y && prev.w === next.w && prev.h === next.h) return;
+  if (!prev && !next) return;
+  fit.value = next;
+}
+
+function clearZoom(animate: boolean) {
+  hot = false;
+  const img = photoEl.value;
+  if (!img) return;
+  img.style.transition = animate && !motionReduced() ? "transform 160ms ease-out" : "none";
+  img.style.transform = "scale(1)";
+}
+
+function onPointer(event: PointerEvent) {
+  const box = fit.value;
+  const el = well.value;
+  const img = photoEl.value;
+  if (!box || !el || !img || motionReduced()) return;
+  const rect = el.getBoundingClientRect();
+  const lx = event.clientX - rect.left;
+  const ly = event.clientY - rect.top;
+  const onPhoto = lx >= box.x && ly >= box.y && lx <= box.x + box.w && ly <= box.y + box.h;
+  if (!onPhoto) {
+    if (hot) clearZoom(true);
+    return;
+  }
+  img.style.transition = "none";
+  img.style.transformOrigin = `${lx - box.x}px ${ly - box.y}px`;
+  img.style.transform = `scale(${PHOTO_ZOOM})`;
+  hot = true;
+}
+
+function onPointerDown(event: PointerEvent) {
+  if (event.pointerType !== "mouse") well.value?.setPointerCapture(event.pointerId);
+  onPointer(event);
+}
+
+function onPointerUp(event: PointerEvent) {
+  if (event.pointerType !== "mouse") clearZoom(true);
+}
+
+function onPointerLeave(event: PointerEvent) {
+  if (event.pointerType === "mouse") clearZoom(true);
+}
+
+function onMotionChange(event: MediaQueryListEvent) {
+  if (event.matches) clearZoom(false);
+}
+
+function bindWell(el: HTMLElement | null) {
+  frameObserver?.disconnect();
+  frameObserver = null;
+  if (!el || typeof ResizeObserver === "undefined") return;
+  frameObserver = new ResizeObserver(() => {
+    const prev = fit.value;
+    measure();
+    if (hot && fit.value !== prev) clearZoom(false);
+  });
+  frameObserver.observe(el);
+}
+
+onMounted(() => {
+  motionQuery = window.matchMedia?.("(prefers-reduced-motion: reduce)") ?? null;
+  motionQuery?.addEventListener("change", onMotionChange);
+  load();
+});
+
+onBeforeUnmount(() => {
+  motionQuery?.removeEventListener("change", onMotionChange);
+  frameObserver?.disconnect();
+  frameObserver = null;
+});
+
+watch(well, bindWell);
+watch(photoEl, (img) => {
+  if (img?.complete && img.naturalWidth > 0) measure();
+});
 watch(() => route.params.slug, load);
 </script>
 
@@ -113,14 +231,27 @@ watch(() => route.params.slug, load);
     <ArcadeKey variant="back" class="mb-6" :to="`/${locale}/shop`">{{ t(locale, "backToShop") }}</ArcadeKey>
     <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
       <section>
-        <div class="grid h-[480px] place-items-center rounded-xl border-2 border-border bg-card p-3 shadow-md">
-          <div class="grid h-full w-full place-items-center overflow-hidden rounded-lg bg-muted">
+        <div class="relative grid h-[480px] place-items-center rounded-xl border-2 border-border bg-card p-3 shadow-md">
+          <div
+            ref="well"
+            class="absolute inset-3 grid place-items-center overflow-hidden rounded-lg bg-muted"
+            :class="photo ? 'cursor-zoom-in touch-none' : ''"
+            @pointermove="onPointer"
+            @pointerdown="onPointerDown"
+            @pointerup="onPointerUp"
+            @pointerleave="onPointerLeave"
+            @pointercancel="clearZoom(true)"
+          >
             <img
               v-if="photo"
+              ref="photoEl"
               :src="photo"
               :alt="style.displayName"
-              class="max-h-full max-w-full rounded-lg object-contain p-3"
+              draggable="false"
+              class="absolute left-0 top-0 max-w-none select-none"
               :class="style.isSoldOut ? 'opacity-70 grayscale' : ''"
+              :style="frameStyle"
+              @load="measure"
             />
             <div v-else class="grid place-items-center gap-3 text-center">
               <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary" aria-hidden="true">
