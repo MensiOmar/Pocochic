@@ -54,4 +54,36 @@ describe("added toast", () => {
     expect(cart.notice?.id).not.toBe(shown);
     expect(wrapper.find(".added-toast").exists()).toBe(true);
   });
+
+  it("drops the ticket when view cart is clicked or the cart route opens", async () => {
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: "/:locale", name: "home", component: { template: "<div />" } },
+        { path: "/:locale/cart", name: "cart", component: { template: "<div />" } },
+      ],
+    });
+    await router.push("/en");
+    const wrapper = mount(AddedToast, { global: { plugins: [router] } });
+    const cart = useCartStore();
+
+    expect(cart.add(line)).toBe(true);
+    await flushPromises();
+    expect(wrapper.find(".added-toast").exists()).toBe(true);
+
+    await wrapper.get(".added-cart").trigger("click");
+    await flushPromises();
+    expect(wrapper.find(".added-toast").exists()).toBe(false);
+    expect(cart.notice).toBeNull();
+
+    await router.push("/en");
+    expect(cart.add({ ...line, availableQty: 4 })).toBe(true);
+    await flushPromises();
+    expect(wrapper.find(".added-toast").exists()).toBe(true);
+
+    await router.push("/en/cart");
+    await flushPromises();
+    expect(wrapper.find(".added-toast").exists()).toBe(false);
+    expect(cart.notice).toBeNull();
+  });
 });

@@ -71,7 +71,7 @@ onBeforeUnmount(() => {
     <img
       :src="brand.background"
       alt=""
-      class="pointer-events-none absolute inset-0 h-full w-full object-cover"
+      class="cassette"
       :class="themeMode === 'dark' ? 'opacity-100' : 'opacity-50'"
     />
     <div class="sky sky-far for-light" aria-hidden="true">
@@ -207,6 +207,17 @@ onBeforeUnmount(() => {
 </template>
 
 <style>
+/* Viewport box. Covering the growing page would scale this image and scroll it. */
+.cassette {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
 /* Direction stays physical so Arabic rtl does not reverse the loop. */
 .sky {
   position: fixed;
