@@ -9,6 +9,7 @@ import ShopLoader from "../components/ShopLoader.vue";
 import { t } from "../i18n";
 import { pageWindow } from "../paging";
 import { useCartStore } from "../stores/cart";
+import "../catalog-search.css";
 
 const PAGE_SIZE = 12;
 const route = useRoute();
@@ -43,6 +44,12 @@ function onInput(event: Event) {
   const value = (event.target as HTMLInputElement).value;
   draft.value = value;
   writeQuery(value, 1);
+}
+
+function clearSearch() {
+  draft.value = "";
+  writeQuery("", 1);
+  document.getElementById("catalog-search")?.focus();
 }
 
 function add(item: StyleListItem) {
@@ -81,21 +88,62 @@ onMounted(load);
       <ArcadeKey variant="choice" chip state="on" class="w-fit shrink-0" @click="writeQuery('', 1)">
         {{ t(locale, "allItems") }}
       </ArcadeKey>
-      <label class="flex min-h-11 w-full items-center gap-3 rounded-lg border-2 border-border bg-card px-4 shadow-md sm:w-80">
-        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-primary" aria-hidden="true">
-          <circle cx="11" cy="11" r="8" />
-          <path d="m21 21-4.3-4.3" />
-        </svg>
-        <input
-          id="catalog-search"
-          :value="draft"
-          type="search"
-          :aria-label="t(locale, 'searchLabel')"
-          :placeholder="t(locale, 'searchPlaceholder')"
-          class="w-full min-w-0 bg-transparent font-sans text-sm text-foreground outline-none placeholder:text-muted-foreground"
-          @input="onInput"
-        />
-      </label>
+      <div class="catalog-find-hit">
+        <div class="catalog-find">
+          <span class="catalog-glass" aria-hidden="true">
+            <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+              <g fill="currentColor" shape-rendering="crispEdges">
+                <rect x="5" y="1" width="4" height="1" />
+                <rect x="3" y="2" width="2" height="1" />
+                <rect x="9" y="2" width="2" height="1" />
+                <rect x="2" y="3" width="1" height="4" />
+                <rect x="11" y="3" width="1" height="4" />
+                <rect x="3" y="7" width="2" height="1" />
+                <rect x="9" y="7" width="2" height="1" />
+                <rect x="5" y="8" width="4" height="1" />
+                <rect x="9" y="8" width="2" height="1" />
+                <rect x="10" y="9" width="2" height="1" />
+                <rect x="11" y="10" width="2" height="1" />
+                <rect x="12" y="11" width="2" height="1" />
+                <rect x="13" y="12" width="2" height="1" />
+              </g>
+            </svg>
+          </span>
+          <input
+            id="catalog-search"
+            :value="draft"
+            type="search"
+            :aria-label="t(locale, 'searchLabel')"
+            :placeholder="t(locale, 'searchPlaceholder')"
+            @input="onInput"
+          />
+          <button
+            v-if="draft"
+            class="catalog-clear"
+            type="button"
+            :aria-label="t(locale, 'clearSearch')"
+            @click="clearSearch"
+          >
+            <svg viewBox="0 0 7 7" width="14" height="14" aria-hidden="true">
+              <g fill="currentColor" shape-rendering="crispEdges">
+                <rect x="0" y="0" width="1" height="1" />
+                <rect x="6" y="0" width="1" height="1" />
+                <rect x="1" y="1" width="1" height="1" />
+                <rect x="5" y="1" width="1" height="1" />
+                <rect x="2" y="2" width="1" height="1" />
+                <rect x="4" y="2" width="1" height="1" />
+                <rect x="3" y="3" width="1" height="1" />
+                <rect x="2" y="4" width="1" height="1" />
+                <rect x="4" y="4" width="1" height="1" />
+                <rect x="1" y="5" width="1" height="1" />
+                <rect x="5" y="5" width="1" height="1" />
+                <rect x="0" y="6" width="1" height="1" />
+                <rect x="6" y="6" width="1" height="1" />
+              </g>
+            </svg>
+          </button>
+        </div>
+      </div>
     </div>
     <div v-if="state === 'error'" class="mt-10">
       <p class="font-heading">{{ t(locale, "error") }}</p>

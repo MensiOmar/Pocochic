@@ -1,0 +1,159 @@
+/* Catalog search key. The hit box stays put; only the face moves. */
+
+.catalog-find-hit {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 2px 8px 8px 2px;
+}
+
+@media (min-width: 40rem) {
+  .catalog-find-hit {
+    width: min(100%, 20rem);
+    margin-inline-start: auto;
+  }
+}
+
+.catalog-find {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  gap: 0;
+  padding-block: 0;
+  padding-inline: 0 8px;
+  border: 3px solid #0f1015;
+  border-radius: 6px;
+  background: #fffff9;
+  color: #0f1015;
+  box-shadow: 4px 4px 0 #f58684;
+}
+
+.catalog-find:focus-within {
+  outline: none;
+}
+
+[data-theme="dark"] .catalog-find {
+  background: #351040;
+  border-color: #f4c5cc;
+  color: #fffff9;
+  box-shadow: 4px 4px 0 #f58684;
+}
+
+.catalog-glass {
+  display: grid;
+  place-items: center;
+  align-self: stretch;
+  flex: none;
+  box-sizing: border-box;
+  width: 44px;
+  background: #f58684;
+  color: #0f1015;
+  border-inline-end: 3px solid #0f1015;
+}
+
+.catalog-glass svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+
+[data-theme="dark"] .catalog-glass {
+  border-inline-end-color: #f4c5cc;
+}
+
+.catalog-find:focus-within .catalog-glass {
+  background: #e0706e;
+}
+
+.catalog-find input {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding-block: 0;
+  padding-inline: 12px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  caret-color: #f58684;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.2;
+  outline: none;
+  box-shadow: none;
+}
+
+.catalog-find input:focus,
+.catalog-find input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.catalog-find input::placeholder {
+  color: #676b4f;
+  opacity: 1;
+}
+
+[data-theme="dark"] .catalog-find input::placeholder {
+  color: #f4c5cc;
+  opacity: 0.72;
+}
+
+.catalog-find input::-webkit-search-decoration,
+.catalog-find input::-webkit-search-cancel-button,
+.catalog-find input::-webkit-search-results-button {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+}
+
+.catalog-clear {
+  display: grid;
+  place-items: center;
+  flex: none;
+  box-sizing: border-box;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 2px solid currentColor;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  outline: none;
+}
+
+.catalog-clear svg {
+  display: block;
+  width: 14px;
+  height: 14px;
+}
+
+.catalog-clear:hover,
+.catalog-clear:focus-visible {
+  background: #f58684;
+  border-color: #0f1015;
+  color: #0f1015;
+  outline: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .catalog-find {
+    transition:
+      transform 70ms steps(2, end),
+      box-shadow 70ms steps(2, end);
+  }
+
+  .catalog-find-hit:hover:not(:focus-within) .catalog-find {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 #f58684;
+  }
+
+  .catalog-find-hit:focus-within .catalog-find {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 #f58684;
+  }
+}
