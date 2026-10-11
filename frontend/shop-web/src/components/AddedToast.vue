@@ -33,6 +33,17 @@ function close() {
   closing.value = true;
 }
 
+function dismiss() {
+  window.clearInterval(timer);
+  shown.value = false;
+  closing.value = false;
+  cart.notice = null;
+}
+
+function onViewCart() {
+  queueMicrotask(dismiss);
+}
+
 function start() {
   window.clearInterval(timer);
   closing.value = false;
@@ -50,6 +61,13 @@ watch(
   () => notice.value?.id,
   (id) => {
     if (id) start();
+  },
+);
+
+watch(
+  () => route.name,
+  (name) => {
+    if (name === "cart") dismiss();
   },
 );
 
@@ -82,7 +100,7 @@ onBeforeUnmount(() => window.clearInterval(timer));
         <path fill="currentColor" d="M0 0h1v1H0zm1 1h1v1H1zm1 1h1v1H2zm1 1h1v1H3zm1 1h1v1H4zM4 0h1v1H4zM3 1h1v1H3zM1 3h1v1H1zM0 4h1v1H0z" />
       </svg>
     </button>
-    <RouterLink class="added-cart" :to="`/${locale}/cart`">{{ t(locale, "viewCart") }}</RouterLink>
+    <RouterLink class="added-cart" :to="`/${locale}/cart`" @click="onViewCart">{{ t(locale, "viewCart") }}</RouterLink>
     <span class="added-life" :data-left="left" aria-hidden="true">
       <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
     </span>
