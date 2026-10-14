@@ -1,0 +1,141 @@
+/* Pair menus. Closed keys are arcade choice chips. The open slab stays cream in both themes. */
+
+.catalog-toolbar {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.catalog-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.catalog-drop {
+  position: relative;
+  width: 100%;
+}
+
+.catalog-drop-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+.catalog-drop-copy {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.catalog-chev {
+  display: block;
+  flex: none;
+  width: 14px;
+  height: 8px;
+}
+
+.catalog-drop.is-open .catalog-chev {
+  transform: scaleY(-1);
+}
+
+.catalog-menu {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% - 4px);
+  inset-inline-start: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: max-content;
+  min-width: calc(100% - 10px);
+  max-width: min(320px, calc(100vw - 40px));
+  max-height: 320px;
+  margin: 0;
+  padding: 6px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+  background: #fffff9;
+  border: 3px solid #0f1015;
+  border-radius: 6px;
+  box-shadow: 4px 4px 0 #f58684;
+  color: #0f1015;
+}
+
+.catalog-opt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 3px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font-family: Silkscreen, ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  line-height: 1.3;
+  text-align: start;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.catalog-opt:hover,
+.catalog-opt:focus-visible {
+  border-color: #0f1015;
+  background: #f4c5cc;
+  outline: none;
+}
+
+.catalog-opt.is-on,
+.catalog-opt.is-on:hover,
+.catalog-opt.is-on:focus-visible {
+  border-color: #0f1015;
+  background: #f58684;
+}
+
+.catalog-count {
+  flex: none;
+  color: #676b4f;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.catalog-opt.is-on .catalog-count,
+.catalog-opt:hover .catalog-count,
+.catalog-opt:focus-visible .catalog-count {
+  color: #0f1015;
+}
+
+@media (min-width: 40rem) {
+  .catalog-toolbar {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 12px 16px;
+  }
+
+  .catalog-filters {
+    flex-direction: row;
+    width: auto;
+    gap: 8px;
+  }
+
+  .catalog-drop {
+    width: max-content;
+    min-width: 210px;
+  }
+}
