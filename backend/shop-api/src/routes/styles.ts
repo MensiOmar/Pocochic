@@ -6,6 +6,8 @@ type FlatRow = {
   item_code: string;
   display_name: string;
   image_path: string | null;
+  section: string | null;
+  category: string | null;
   variant_id: string;
   size: string;
   reference: string;
@@ -15,10 +17,13 @@ type FlatRow = {
 
 const flatSql = `
   SELECT s.slug, s.item_code, s.display_name, s.image_path,
+         parent.slug AS section, leaf.slug AS category,
          v.id AS variant_id, v.size, v.reference, v.price_cents,
          (v.quantity - v.pending_qty - v.sold_qty) AS available_qty
   FROM styles s
   JOIN variants v ON v.style_id = s.id
+  LEFT JOIN categories leaf ON leaf.slug = s.category_slug
+  LEFT JOIN categories parent ON parent.slug = leaf.parent_slug
 `;
 
 const flatOrder = " ORDER BY s.display_name COLLATE NOCASE, v.size, v.reference";
@@ -39,6 +44,8 @@ function toListItem(rows: FlatRow[]) {
     slug: first.slug,
     itemCode: first.item_code,
     displayName: first.display_name,
+    section: first.section,
+    category: first.category,
     imagePath: first.image_path,
     priceCents: min,
     priceVaries: min !== max,
@@ -74,7 +81,20 @@ function groupStyles(rows: FlatRow[]) {
 
 export const styleRoutes = factory.createApp()
   .get("/styles", async (c) => {
-    const rows = await c.var.sql.all<FlatRow>(flatSql + flatOrder);
+    const section = c.req.query("section");
+    const category = c.req.query("category");
+    const filters: string[] = [];
+    const params: string[] = [];
+    if (section) {
+      filters.push("parent.slug = ?");
+      params.push(section);
+    }
+    if (category) {
+      filters.push("leaf.slug = ?");
+      params.push(category);
+    }
+    const where = filters.length ? ` WHERE ${filters.join(" AND ")}` : "";
+    const rows = await c.var.sql.all<FlatRow>(flatSql + where + flatOrder, params);
     return c.json(groupStyles(rows));
   })
   .get("/styles/:slug", async (c) => {
