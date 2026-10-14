@@ -23,6 +23,8 @@ function style(overrides: Partial<StyleDetail> = {}): StyleDetail {
     slug: "tee-1",
     itemCode: "TEE-1",
     displayName: "Cassette Tee",
+    section: null,
+    category: null,
     imagePath: "/catalog/styles/tee-1.webp",
     priceCents: 4500,
     priceVaries: false,

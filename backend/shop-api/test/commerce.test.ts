@@ -72,6 +72,33 @@ describe("shop and admin API boundary", () => {
     const style = await detail.json() as { variants: Array<{ availableQty: number; size: string }> };
     expect(style.variants.find((variant) => variant.size === "S")?.availableQty).toBe(3);
     expect(style.variants.find((variant) => variant.size === "M")?.availableQty).toBe(2);
+    expect(body.find((item) => item.slug === "tee-1")).toMatchObject({ section: null, category: null });
+  });
+
+  it("filters a style by its section and leaf category", async () => {
+    const { shopEnv, db } = harness();
+    db.prepare("INSERT OR IGNORE INTO categories (slug, parent_slug, sort_order) VALUES ('clothing', NULL, 1)").run();
+    db.prepare("INSERT OR IGNORE INTO categories (slug, parent_slug, sort_order) VALUES ('t-shirt', 'clothing', 1)").run();
+    db.prepare("UPDATE styles SET category_slug = 't-shirt' WHERE item_code = 'TEE-1'").run();
+    const list = await shopApp.request("/styles", {}, shopEnv);
+    const body = await list.json() as Array<Record<string, unknown>>;
+    expect(body.find((item) => item.slug === "tee-1")).toMatchObject({ section: "clothing", category: "t-shirt" });
+    expect(body.find((item) => item.slug === "gone")).toMatchObject({ section: null, category: null });
+    const detail = await shopApp.request("/styles/tee-1", {}, shopEnv);
+    expect(detail.status).toBe(200);
+    expect(await detail.json()).toMatchObject({ section: "clothing", category: "t-shirt" });
+    const clothing = await shopApp.request("/styles?section=clothing", {}, shopEnv);
+    expect(clothing.status).toBe(200);
+    expect((await clothing.json() as Array<{ slug: string }>).map((item) => item.slug)).toEqual(["tee-1"]);
+    const nope = await shopApp.request("/styles?section=nope", {}, shopEnv);
+    expect(nope.status).toBe(200);
+    expect(await nope.json()).toEqual([]);
+    const tee = await shopApp.request("/styles?category=t-shirt", {}, shopEnv);
+    expect(tee.status).toBe(200);
+    expect((await tee.json() as Array<{ slug: string }>).map((item) => item.slug)).toEqual(["tee-1"]);
+    const mismatch = await shopApp.request("/styles?section=accessories&category=t-shirt", {}, shopEnv);
+    expect(mismatch.status).toBe(200);
+    expect(await mismatch.json()).toEqual([]);
   });
 
   it("quotes percent, free, and fixed discount without touching delivery", async () => {

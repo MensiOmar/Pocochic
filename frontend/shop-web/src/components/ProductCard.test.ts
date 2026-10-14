@@ -12,6 +12,8 @@ const base = {
   slug: "tee",
   itemCode: "TEE",
   displayName: "Cassette Tee",
+  section: null,
+  category: null,
   imagePath: "/catalog/styles/tee.webp",
   priceCents: 4500,
   priceVaries: false,

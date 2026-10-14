@@ -22,6 +22,13 @@
       "when": 1758758402000,
       "tag": "0003_v1.0.0_order_idempotency",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1758758403000,
+      "tag": "0004_v1.0.0_categories",
+      "breakpoints": true
     }
   ]
 }

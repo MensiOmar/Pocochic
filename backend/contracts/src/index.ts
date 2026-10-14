@@ -34,6 +34,8 @@ export const styleListItemSchema = z.object({
   slug: z.string(),
   itemCode: z.string(),
   displayName: z.string(),
+  section: z.string().nullable(),
+  category: z.string().nullable(),
   imagePath: catalogPath,
   priceCents: z.number().int().nonnegative(),
   priceVaries: z.boolean(),

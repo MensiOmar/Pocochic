@@ -1,16 +1,29 @@
 import { sql } from "drizzle-orm";
-import { check, index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { type AnySQLiteColumn, check, index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
-export const styles = sqliteTable("styles", {
-  id: text("id").primaryKey(),
-  itemCode: text("item_code").notNull().unique(),
-  slug: text("slug").notNull().unique(),
-  displayName: text("display_name").notNull(),
-  description: text("description"),
-  imagePath: text("image_path"),
-  createdAt: text("created_at").notNull(),
-  updatedAt: text("updated_at").notNull(),
+export const categories = sqliteTable("categories", {
+  slug: text("slug").primaryKey(),
+  parentSlug: text("parent_slug").references((): AnySQLiteColumn => categories.slug),
+  sortOrder: integer("sort_order").notNull(),
 });
+
+export const styles = sqliteTable(
+  "styles",
+  {
+    id: text("id").primaryKey(),
+    itemCode: text("item_code").notNull().unique(),
+    slug: text("slug").notNull().unique(),
+    displayName: text("display_name").notNull(),
+    description: text("description"),
+    imagePath: text("image_path"),
+    categorySlug: text("category_slug").references(() => categories.slug),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (t) => ({
+    categoryIdx: index("styles_category_slug_idx").on(t.categorySlug),
+  }),
+);
 
 export const variants = sqliteTable(
   "variants",
