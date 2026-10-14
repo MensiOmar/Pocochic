@@ -3,7 +3,9 @@ import type { Locale, StyleListItem } from "@pocochic/contracts";
 import { computed, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useStyles } from "../catalog";
+import { categoryLabel, matchesCatalog, sectionLabel } from "../catalog-filters";
 import ArcadeKey from "../components/ArcadeKey.vue";
+import CatalogMenus from "../components/CatalogMenus.vue";
 import ProductCard from "../components/ProductCard.vue";
 import ShopLoader from "../components/ShopLoader.vue";
 import { t } from "../i18n";
@@ -18,38 +20,58 @@ const cart = useCartStore();
 const { items, state, load } = useStyles();
 const locale = computed(() => route.params.locale as Locale);
 const queryText = computed(() => String(route.query.q ?? ""));
+const sectionSlug = computed(() => (sectionLabel(String(route.query.section ?? "")) ? String(route.query.section) : ""));
+const categorySlug = computed(() => (
+  categoryLabel(sectionSlug.value, String(route.query.category ?? "")) ? String(route.query.category) : ""
+));
 const draft = ref(queryText.value);
+const filtersClear = computed(() => !sectionSlug.value && !categorySlug.value && !queryText.value.trim());
 
 watch(queryText, (value) => {
   draft.value = value;
 });
 
-const filtered = computed(() => {
-  const needle = queryText.value.trim().toLowerCase();
-  if (!needle) return items.value;
-  return items.value.filter((item) => item.displayName.toLowerCase().includes(needle));
-});
+const filtered = computed(() => items.value.filter((item) => matchesCatalog(item, {
+  section: sectionSlug.value,
+  category: categorySlug.value,
+  q: queryText.value,
+})));
 
 const paged = computed(() => pageWindow(filtered.value, Number(route.query.page ?? 1), PAGE_SIZE));
 
-function writeQuery(q: string, pageNumber: number) {
+function writeQuery(next: { q: string; section: string; category: string; page: number }) {
   const query: Record<string, string> = {};
-  const trimmed = q.trim();
+  if (next.section) query.section = next.section;
+  if (next.category && next.section) query.category = next.category;
+  const trimmed = next.q.trim();
   if (trimmed) query.q = trimmed;
-  if (pageNumber > 1) query.page = String(pageNumber);
+  if (next.page > 1) query.page = String(next.page);
   router.replace({ query });
 }
 
 function onInput(event: Event) {
   const value = (event.target as HTMLInputElement).value;
   draft.value = value;
-  writeQuery(value, 1);
+  writeQuery({ q: value, section: sectionSlug.value, category: categorySlug.value, page: 1 });
 }
 
 function clearSearch() {
   draft.value = "";
-  writeQuery("", 1);
+  writeQuery({ q: "", section: sectionSlug.value, category: categorySlug.value, page: 1 });
   document.getElementById("catalog-search")?.focus();
+}
+
+function pickSection(slug: string) {
+  writeQuery({ q: queryText.value, section: slug, category: "", page: 1 });
+}
+
+function pickCategory(slug: string) {
+  writeQuery({ q: queryText.value, section: sectionSlug.value, category: slug, page: 1 });
+}
+
+function clearAll() {
+  draft.value = "";
+  writeQuery({ q: "", section: "", category: "", page: 1 });
 }
 
 function add(item: StyleListItem) {
@@ -69,10 +91,20 @@ function add(item: StyleListItem) {
   });
 }
 
+watch(() => [route.query.section, route.query.category], () => {
+  const rawSection = String(route.query.section ?? "");
+  const rawCategory = String(route.query.category ?? "");
+  if (rawSection === sectionSlug.value && rawCategory === categorySlug.value) return;
+  const pageNumber = Number(route.query.page ?? 1) || 1;
+  writeQuery({ q: queryText.value, section: sectionSlug.value, category: categorySlug.value, page: pageNumber });
+});
+
 watch(paged, (value) => {
   if (state.value !== "ready") return;
   const requested = Number(route.query.page ?? 1) || 1;
-  if (requested !== value.current) writeQuery(queryText.value, value.current);
+  if (requested !== value.current) {
+    writeQuery({ q: queryText.value, section: sectionSlug.value, category: categorySlug.value, page: value.current });
+  }
 });
 
 onMounted(load);
@@ -84,10 +116,18 @@ onMounted(load);
     <p class="font-heading text-xs font-bold uppercase text-primary">{{ t(locale, "arcadeKicker") }}</p>
     <h1 class="mt-2 text-balance font-heading text-4xl font-bold">{{ t(locale, "allProducts") }}</h1>
     <p class="mt-2 text-pretty text-muted-foreground">{{ t(locale, "allProductsBody") }}</p>
-    <div class="mt-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <ArcadeKey variant="choice" chip state="on" class="w-fit shrink-0" @click="writeQuery('', 1)">
+    <div class="catalog-toolbar mt-7">
+      <ArcadeKey variant="choice" chip :state="filtersClear ? 'on' : 'off'" class="w-fit shrink-0" @click="clearAll">
         {{ t(locale, "allItems") }}
       </ArcadeKey>
+      <CatalogMenus
+        :locale="locale"
+        :items="items"
+        :section="sectionSlug"
+        :category="categorySlug"
+        @section="pickSection"
+        @category="pickCategory"
+      />
       <div class="catalog-find-hit">
         <div class="catalog-find">
           <span class="catalog-glass" aria-hidden="true">
@@ -160,7 +200,7 @@ onMounted(load);
           square
           :aria-label="t(locale, 'previous')"
           :disabled="paged.current <= 1"
-          @click="writeQuery(queryText, paged.current - 1)"
+          @click="writeQuery({ q: queryText, section: sectionSlug, category: categorySlug, page: paged.current - 1 })"
         >
           <span class="page-prev" aria-hidden="true">&lt;</span>
         </ArcadeKey>
@@ -170,7 +210,7 @@ onMounted(load);
           variant="choice"
           square
           state="off"
-          @click="writeQuery(queryText, paged.current + 1)"
+          @click="writeQuery({ q: queryText, section: sectionSlug, category: categorySlug, page: paged.current + 1 })"
         >
           {{ paged.current + 1 }}
         </ArcadeKey>
@@ -179,7 +219,7 @@ onMounted(load);
           square
           :aria-label="t(locale, 'next')"
           :disabled="paged.current >= paged.pages"
-          @click="writeQuery(queryText, paged.current + 1)"
+          @click="writeQuery({ q: queryText, section: sectionSlug, category: categorySlug, page: paged.current + 1 })"
         >
           <span class="page-next" aria-hidden="true">&gt;</span>
         </ArcadeKey>
