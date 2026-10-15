@@ -98,18 +98,28 @@ onBeforeUnmount(() => {
         <img :src="cloudsNearDark" alt="" />
       </div>
     </div>
-    <header v-if="route.name === 'cart'" class="relative z-20 border-b-2 border-border bg-card">
-      <div class="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-5 py-4">
-        <ArcadeKey variant="back" class="min-w-0" :to="`/${locale}`">{{ t(locale, "keepBrowsing") }}</ArcadeKey>
-        <img :src="brand.logo" alt="Pocochic" class="h-10 w-auto shrink-0 object-contain" />
-        <span class="shrink-0 font-heading text-xs font-bold uppercase sm:text-sm">{{ t(locale, "yourCart") }} ({{ cart.count }})</span>
-      </div>
-    </header>
-    <header v-else-if="route.name === 'checkout'" class="relative z-20 border-b-2 border-border bg-card">
-      <div class="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-5 py-4">
-        <ArcadeKey variant="back" class="min-w-0" :to="`/${locale}/cart`">{{ t(locale, "backToBag") }}</ArcadeKey>
-        <img :src="brand.logo" alt="Pocochic" class="h-10 w-auto shrink-0 object-contain" />
-        <span class="shrink-0 font-heading text-xs font-bold uppercase sm:text-sm">{{ t(locale, "checkoutBar") }}</span>
+    <header v-if="route.name === 'cart' || route.name === 'checkout'" class="relative z-20 pt-6">
+      <div class="player-bar flow-bar" :data-lang="locale">
+        <div class="player-row">
+          <div class="flow-wing">
+            <ArcadeKey
+              variant="back"
+              class="flow-action"
+              :to="route.name === 'cart' ? `/${locale}` : `/${locale}/cart`"
+            >
+              {{ t(locale, route.name === "cart" ? "keepBrowsing" : "backToBag") }}
+            </ArcadeKey>
+          </div>
+          <RouterLink :to="`/${locale}`" class="player-logo" aria-label="Pocochic">
+            <img :src="brand.logo" alt="" />
+          </RouterLink>
+          <div class="flow-wing">
+            <span class="flow-mark font-heading text-xs font-bold uppercase sm:text-sm">
+              <template v-if="route.name === 'cart'">{{ t(locale, "yourCart") }} ({{ cart.count }})</template>
+              <template v-else>{{ t(locale, "checkoutBar") }}</template>
+            </span>
+          </div>
+        </div>
       </div>
     </header>
     <header v-else class="relative z-20 pt-6">
