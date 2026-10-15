@@ -385,6 +385,94 @@
   }
 }
 
+/* Cart and checkout keep their own actions inside the same player slab.
+   The logo is pinned to the slab, so its center is the navbar's center
+   even when the two labels have different widths. */
+.flow-bar {
+  position: relative;
+  container-type: inline-size;
+}
+
+.flow-bar .player-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.flow-wing {
+  display: flex;
+  align-items: center;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.flow-bar .player-row > .flow-wing:first-child {
+  justify-content: flex-start;
+  padding-inline-end: 46px;
+}
+
+.flow-bar .player-row > .flow-wing:last-child {
+  justify-content: flex-end;
+  padding-inline-start: 46px;
+}
+
+.flow-bar .flow-action {
+  width: max-content;
+  max-width: 100%;
+}
+
+.flow-bar .player-logo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 2;
+  transform: translate(-50%, -50%);
+}
+
+.flow-mark {
+  width: max-content;
+  max-width: 100%;
+  color: inherit;
+  white-space: nowrap;
+}
+
+/* Back keys stay quiet and only as wide as their label. Ink matches the cart title. */
+.flow-bar .px.px-back .face,
+[data-theme="dark"] .flow-bar .px.px-back .face {
+  width: auto;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  color: inherit;
+}
+
+/* A narrow slab cannot fit the longest back label beside a centered logo. */
+@container (max-width: 420px) {
+  .flow-bar .px.px-back .face {
+    padding-inline: 4px;
+    font-size: 10px;
+    letter-spacing: 0.01em;
+  }
+}
+
+.flow-bar .px.px-back:hover .face,
+[data-theme="dark"] .flow-bar .px.px-back:hover .face {
+  color: #0f1015;
+  border-color: #351040;
+  background: #fffff9;
+  box-shadow:
+    inset 0 3px 0 rgba(255, 253, 248, 0.8),
+    4px 4px 0 #351040;
+}
+
+.flow-bar .px.px-back:active .face,
+[data-theme="dark"] .flow-bar .px.px-back:active .face {
+  color: #0f1015;
+  border-color: #351040;
+  background: #f4c5cc;
+  box-shadow: inset 0 3px 0 rgba(53, 16, 64, 0.22);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .player-thumb,
   .player-thumb .sun,
